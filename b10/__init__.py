@@ -3,7 +3,9 @@
 import logging
 
 from . import data as dataAPI
-from . import ml as MLAPI
+from . import machinelearning as MLAPI
+from . import tools as tl
+from . import visualization as pl
 
 try:
     import importlib.metadata as importlib_metadata
