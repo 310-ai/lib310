@@ -21,5 +21,5 @@ b10_logger = logging.getLogger("b10")
 b10_logger.propagate = False
 
 __all__ = [
-    'dataAPI', 'MLAPI'
+    'dataAPI', 'MLAPI', 'tl', 'pl',
 ]
