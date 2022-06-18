@@ -2,6 +2,7 @@
 
 import logging
 
+from ._settings import settings
 from . import data as dataAPI
 from . import machinelearning as MLAPI
 from . import tools as tl
@@ -14,7 +15,7 @@ except ModuleNotFoundError:
 package_name = "b10"
 __version__ = importlib_metadata.version(package_name)
 
-test_var = "test"
+settings.verbosity = logging.INFO
 
 b10_logger = logging.getLogger("b10")
 b10_logger.propagate = False
