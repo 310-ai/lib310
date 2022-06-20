@@ -13,3 +13,6 @@ class AutoRegressiveLanguageModeling(BaseMLTask):
 
     def get_embeddings(self, *args, **kwargs):
         pass
+
+    def generate(self, *args, **kwargs):
+        pass
