@@ -36,11 +36,14 @@ import b10
 # 2. Instantiate a pre-trained Generative Machine Learning model (e.g. GPT3)
 goa = b10.MLAPI.plm(model="GPT3", v="512_756_4layers")
 
-# 4. Predict!
+# 3. Predict!
 generated_sequences = goa.generate(num_samples=1024)
 
-# 5. Downstream Analysis...
+# 4. Downstream Analysis...
 clusters = b10.tl.cluster(generated_sequences, method='kcluster')
+
+# 5. Visualization
+b10.pl.umap(generated_sequences, clusters)
 ```
 
 
