@@ -1,6 +1,6 @@
 # B10 Python package
 
-![Alt Text](media/logo.png)
+![Alt Text](media/logo.)
 
 ## Sample Usages
 
