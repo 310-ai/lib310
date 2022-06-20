@@ -5,8 +5,10 @@ description = "b10 Python Package"
 authors = ["naghipourfar <naghipourfar@berkeley.edu>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-logging = "^0.4.9"
+python = ">3.7,<3.11"
+google-cloud = "^0.34.0"
+google-cloud-bigquery = "^3.2.0"
+biopython = "^1.79"
 
 [tool.poetry.dev-dependencies]
 
