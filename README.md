@@ -8,17 +8,17 @@
 
 ```python
 # 1. import b10 
-from b10 import dataAPI as d, MLAPI as m
+import b10 
 
 # 2. Get Spike SARS2 related proteins from database
-seqs = d.fetch(
+seqs = b10.dataAPI.fetch(
     name="SPIKE_SARS2",
     feature='sequence',
     limit=500
 )
 
 # 3. Instantiate a pre-trained GO Annotation machine learning model (e.g. TALE)
-goa = m.goa(model="TALE", v="512_756_4layers")
+goa = b10.MLAPI.goa(model="TALE", v="512_756_4layers")
 
 # 4. Predict!
 annotations = goa.predict(seqs)
