@@ -1,5 +1,7 @@
 # B10 Python package
 
+![Alt Text](media/logo.png)
+
 ## Sample Usages
 
 ### Protein Functional Annotation
@@ -24,3 +26,22 @@ annotations = goa.predict(seqs)
 # 5. (Optional) Get sequences' embeddings for visualization purposes or downstream analysis 
 embeddings = goa.get_embeddings(seqs, layer=-1)
 ```
+
+### Protein Generation
+
+```python
+# 1. import b10 
+import b10
+
+# 2. Instantiate a pre-trained Generative Machine Learning model (e.g. GPT3)
+goa = b10.MLAPI.plm(model="GPT3", v="512_756_4layers")
+
+# 4. Predict!
+generated_sequences = goa.generate(num_samples=1024)
+
+# 5. Downstream Analysis...
+clusters = b10.tl.cluster(generated_sequences, method='kcluster')
+```
+
+
+
