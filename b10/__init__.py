@@ -3,7 +3,7 @@
 import logging
 
 from ._settings import settings
-from . import data as dataAPI
+from . import data as db
 from . import machinelearning as MLAPI
 from . import tools as tl
 from . import visualization as pl
@@ -21,5 +21,5 @@ b10_logger = logging.getLogger("b10")
 b10_logger.propagate = False
 
 __all__ = [
-    'dataAPI', 'MLAPI', 'tl', 'pl',
+    'db', 'MLAPI', 'tl', 'pl',
 ]
