@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from google.cloud import bigquery
+from .client import Client
 
 import numpy as np
 
@@ -18,7 +18,7 @@ class DatabaseConnection(object):
             return cls()
 
     def __init__(self):
-        self.client = bigquery.Client()
+        self.client = Client()
         print(f'Successfully established a connection with b10 Database!')
 
     def query(self, **query_params):
