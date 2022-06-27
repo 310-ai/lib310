@@ -39,10 +39,10 @@ class Client(bigquery.Client):
         except Exception as e:
             return False
 
-    @property()
+    @property
     def __usage_log_file(self):
         return '.usage_log'
 
-    @property()
+    @property
     def single_query_limit(self):
         return 5 * 10 ** 11
