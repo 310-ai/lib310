@@ -2,7 +2,7 @@
 
 import logging
 
-from ._settings import settings
+# from ._settings import settings
 from . import data as db
 from . import machinelearning as ml
 from . import tools as tools
@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 package_name = "lib310"
 __version__ = importlib_metadata.version(package_name)
 
-settings.verbosity = logging.INFO
+# settings.verbosity = logging.INFO
 
 b10_logger = logging.getLogger("lib310")
 b10_logger.propagate = False
