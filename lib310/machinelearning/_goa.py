@@ -2,13 +2,16 @@ from ._base import BaseMLTask
 
 
 class GoAnnotation(BaseMLTask):
+    def __init__(self):
+        super().__init__()
+
     def fit(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def run(self, *args, **kwargs):
         pass
 
-    def predict(self, *args, **kwargs):
-        pass
-
-    def get_embeddings(self, *args, **kwargs):
+    def __get_embeddings(self, *args, **kwargs):
         pass
 
     def save(self, *args, **kwargs):

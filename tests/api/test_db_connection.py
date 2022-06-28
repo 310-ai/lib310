@@ -1,5 +1,5 @@
 def test_bigquery_select():
-    from b10.data.client import Client
+    from lib310.data.client import Client
     import dotenv
     dotenv.load_dotenv('.env')
     c = Client()

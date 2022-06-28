@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class BaseMLTask(ABC):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         pass
 
     @abstractmethod
@@ -10,10 +10,10 @@ class BaseMLTask(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         raise NotImplementedError
 
-    def get_embeddings(self, *args, **kwargs):
+    def __get_embeddings(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod

@@ -7,18 +7,18 @@
 ### Protein Functional Annotation
 
 ```python
-# 1. import b10 
-import b10 
+# 1. import lib310 
+import lib310
 
 # 2. Get Spike SARS2 related proteins from database
-seqs = b10.dataAPI.fetch(
+seqs = lib310.db.fetch(
     name="SPIKE_SARS2",
     feature='sequence',
     limit=500
 )
 
 # 3. Instantiate a pre-trained GO Annotation machine learning model (e.g. TALE)
-goa = b10.MLAPI.goa(model="TALE", v="512_756_4layers")
+goa = lib310.ml.goa(model="TALE", v="512_756_4layers")
 
 # 4. Predict!
 annotations = goa.predict(seqs)
@@ -30,20 +30,20 @@ embeddings = goa.get_embeddings(seqs, layer=-1)
 ### Protein Generation
 
 ```python
-# 1. import b10 
-import b10
+# 1. import lib310 
+import lib310
 
 # 2. Instantiate a pre-trained Generative Machine Learning model (e.g. GPT3)
-goa = b10.MLAPI.plm(model="GPT3", v="512_756_4layers")
+lm = lib310.ml.AutoRegressiveLM(model="GPT3", v="512_756_4layers")
 
 # 3. Predict!
-generated_sequences = goa.generate(num_samples=1024)
+generated_sequences = lm.run(num_samples=1024)
 
 # 4. Downstream Analysis...
-clusters = b10.tl.cluster(generated_sequences, method='kcluster')
+clusters = lib310.tools.cluster(generated_sequences, method='kcluster')
 
 # 5. Visualization
-b10.pl.umap(generated_sequences, clusters)
+lib310.plot.umap(generated_sequences, clusters)
 ```
 
 

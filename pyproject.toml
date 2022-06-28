@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "b10"
+name = "lib310"
 version = "0.1.0"
 description = "b10 Python Package"
 authors = ["naghipourfar <naghipourfar@berkeley.edu>"]
 
 [tool.poetry.dependencies]
-python = ">3.7,<3.11"
+python = ">3.8,<3.11"
 google-cloud = "^0.34.0"
 google-cloud-bigquery = "^3.2.0"
 biopython = "^1.79"

@@ -4,7 +4,7 @@ from typing import Union
 from rich.console import Console
 from rich.logging import RichHandler
 
-b10_logger = logging.getLogger("b10")
+b10_logger = logging.getLogger("lib310")
 
 
 class B10Config:
@@ -13,7 +13,7 @@ class B10Config:
 
     def reset_logging_handler(self):
         """
-        Resets "b10" log handler to a basic RichHandler().
+        Resets "lib310" log handler to a basic RichHandler().
         This is useful if piping outputs to a file.
         """
         b10_logger.removeHandler(b10_logger.handlers[0])

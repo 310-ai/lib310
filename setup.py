@@ -3,4 +3,4 @@
 import setuptools
 
 if __name__ == "__main__":
-    setuptools.setup(name="b10")
+    setuptools.setup(name="lib310")
