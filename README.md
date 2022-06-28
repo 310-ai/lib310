@@ -1,4 +1,4 @@
-# B10 Python package
+# lib310 Python package
 
 ![Alt Text](media/logo.png)
 

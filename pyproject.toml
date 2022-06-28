@@ -9,6 +9,7 @@ python = ">3.8,<3.11"
 google-cloud = "^0.34.0"
 google-cloud-bigquery = "^3.2.0"
 biopython = "^1.79"
+rich = "^12.4.4"
 
 [tool.poetry.dev-dependencies]
 
