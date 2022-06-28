@@ -1,4 +1,5 @@
 # lib310 Python package
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/310-ai/lib310/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/310-ai/lib310/tree/master)
 
 ![Alt Text](media/logo.png)
 
