@@ -6,14 +6,16 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/python:3.9
+      - image: python:3.9
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: poetry
       - run:
           name: Run tests
-          command: PYTHONPATH=. poetry run pytest tests/
+          command: |
+            pip install pytest
+            PYTHONPATH=. poetry run pytest tests/
 
 workflows:
   main:
