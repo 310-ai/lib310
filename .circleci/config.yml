@@ -1,21 +1,18 @@
 version: 2.1
 
 orbs:
-  python: circleci/python@1.5.0
+  python: circleci/python@2.0.3
 
 jobs:
   build:
-    docker:
-      - image: python:3.9
+    executor: python/default
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: poetry
       - run:
           name: Run tests
-          command: |
-            pip install pytest
-            PYTHONPATH=. poetry run pytest tests/
+          command: pip install pytest && PYTHONPATH=. poetry run pytest tests/
 
 workflows:
   main:
