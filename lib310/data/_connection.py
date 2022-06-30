@@ -16,7 +16,7 @@ class DatabaseConnection(object):
                 'You must set BigQuery credentials first! try using `lib310.db.set_gcloud_key_path(path) method.`')
 
         self.client = Client()
-        self.table_name = kwargs.get('table_name', None)
+        self.table_name = kwargs.get('table_name', 'pfsdb3.0_uniprot.uniref')
         self.table = self.client.get_table(self.table_name) if self.table_name else None
         self.table_schema = {schema.name: {'type': schema.field_type, } for schema in
                              self.table.schema} if self.table else {}
@@ -25,7 +25,11 @@ class DatabaseConnection(object):
         if self.verbose:
             print(f'Successfully established a connection with lib310 Database!')
 
-    def query(self, **query_params):
+    def get_table_info(self):
+        for column_name, column_info in self.table_schema.items():
+            print(f'{column_name}:{column_info["type"]}')
+
+    def query(self, *args, **query_params):
         table_name = query_params.pop('table_name', 'pfsdb3.0_uniprot.uniref')
 
         if table_name != self.table_name:
@@ -36,40 +40,43 @@ class DatabaseConnection(object):
             if self.verbose:
                 print(f'Successfully connected to {table_name} with {self.table.num_rows} rows!')
 
-        query_string = f"SELECT * FROM `{table_name}`"
+        if 'query' not in query_params.keys():
+            query_string = f"SELECT * FROM `{table_name}`"
 
-        force_limit = query_params.pop('force_limit', True)
-        limit = query_params.pop('limit', 100)
+            force_limit = query_params.pop('force_limit', True)
+            limit = query_params.pop('limit', 100)
 
-        query_parameters = []
-        for key, query_value in query_params.items():
-            if key in self.table_schema.keys():
-                if not isinstance(query_value, list):
-                    query_value = [query_value]
-                query_parameters.append(
-                    bigquery.ArrayQueryParameter(f'{key}s', self.table_schema[key]['type'], query_value))
+            query_parameters = []
+            for key, query_value in query_params.items():
+                if key in self.table_schema.keys():
+                    if not isinstance(query_value, list):
+                        query_value = [query_value]
+                    query_parameters.append(
+                        bigquery.ArrayQueryParameter(f'{key}s', self.table_schema[key]['type'], query_value))
 
-        job_config = bigquery.QueryJobConfig(
-            query_parameters=query_parameters,
-        )
+            job_config = bigquery.QueryJobConfig(
+                query_parameters=query_parameters,
+            )
 
-        constraints = 0
-        for key, query_value in query_params.items():
-            if key in self.table_schema.keys():
-                if constraints == 0:
-                    query_string += ' WHERE '
+            constraints = 0
+            for key, query_value in query_params.items():
+                if key in self.table_schema.keys():
+                    if constraints == 0:
+                        query_string += ' WHERE '
 
-                query_string += f'{key} IN UNNEST(@{key}s)'
+                    query_string += f'{key} IN UNNEST(@{key}s)'
 
-                if constraints >= 0:
-                    query_string += ' AND '
-                constraints += 1
+                    if constraints >= 0:
+                        query_string += ' AND '
+                    constraints += 1
 
-        query_string = query_string[:-5]
+            query_string = query_string[:-5]
 
-        if force_limit:
-            query_string += f' LIMIT {limit}'
+            if force_limit:
+                query_string += f' LIMIT {limit}'
 
-        query_results = self.client.query(query_string, job_config=job_config).result().to_dataframe()
+            query_results = self.client.query(query_string, job_config=job_config).result().to_dataframe()
 
-        return query_results
+            return query_results
+        else:
+            return self.client.query(query_params.get('query')).result().to_dataframe()
