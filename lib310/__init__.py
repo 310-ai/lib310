@@ -3,7 +3,8 @@
 import logging
 
 # from ._settings import settings
-from . import data as db
+from . import database as db
+from . import data
 from . import machinelearning as ml
 from . import tools as tools
 from . import visualization as plot
@@ -24,5 +25,5 @@ b10_logger = logging.getLogger("lib310")
 b10_logger.propagate = False
 
 __all__ = [
-    'db', 'ml', 'tools', 'plot',
+    'db', 'data', 'ml', 'tools', 'plot',
 ]
