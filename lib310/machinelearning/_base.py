@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 
 
 class BaseMLTask(ABC):
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, model, tokenizer, **kwargs):
+        self.model = model
+        self.tokenizer = tokenizer
 
     @abstractmethod
     def fit(self, *args, **kwargs):
@@ -11,11 +12,4 @@ class BaseMLTask(ABC):
 
     @abstractmethod
     def run(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def __get_embeddings(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    def save(self, *args, **kwargs):
         raise NotImplementedError
