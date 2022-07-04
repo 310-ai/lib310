@@ -1,9 +1,12 @@
+from typing import Optional
+
 import numpy as np
-import pandas as pd
+
+from lib310.data import ProteinDataTable
 
 
-class ModelOutput(object):
-    def __init__(self, outputs, obs: pd.DataFrame):
+class GoAnnotationOutput(object):
+    def __init__(self, outputs, obs: ProteinDataTable):
         self.raw_outputs = outputs
         self.obs = obs
 
@@ -16,3 +19,10 @@ class ModelOutput(object):
             layer = -1
 
         return self.embeddings
+
+
+class CausalLMOutput(object):
+    def __init__(self, outputs):
+        self.raw_outputs = outputs
+
+        self.generated_proteins = [output['generated_text'].strip() for output in outputs]
