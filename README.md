@@ -18,13 +18,13 @@ seqs = lib310.db.fetch(
 )
 
 # 3. Instantiate a pre-trained GO Annotation machine learning model (e.g. TALE)
-goa = lib310.ml.goa(model="TALE", v="512_756_4layers")
+goa = lib310.ml.GoAnnotation.from_pretrained(model="prot_bert", v="latest")
 
 # 4. Predict!
-annotations = goa.predict(seqs)
+results = goa.run(seqs)
 
-# 5. (Optional) Get sequences' embeddings for visualization purposes or downstream analysis 
-embeddings = goa.get_embeddings(seqs, layer=-1)
+# 5. Visualization
+lib310.plot.umap(results, color='protein_families')
 ```
 
 ### Protein Generation
@@ -34,7 +34,7 @@ embeddings = goa.get_embeddings(seqs, layer=-1)
 import lib310
 
 # 2. Instantiate a pre-trained Generative Machine Learning model (e.g. GPT3)
-lm = lib310.ml.AutoRegressiveLM(model="GPT3", v="512_756_4layers")
+lm = lib310.ml.AutoRegressiveLM.from_pretrained(model="ProtGPT3", v="latest")
 
 # 3. Predict!
 generated_sequences = lm.run(num_samples=1024)
