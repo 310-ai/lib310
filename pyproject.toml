@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lib310"
-version = "0.1.4"
+version = "0.1.5"
 description = "lib310 Python Package"
 authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>"]
 
