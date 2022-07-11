@@ -2,4 +2,4 @@
 .idea/
 .vscode/
 google-service.json
-b10.egg-info
+*.egg-info
