@@ -21,3 +21,17 @@ def get_table_info(**kwargs):
         db_connection = DatabaseConnection(**kwargs)
 
     return db_connection.get_table_info()
+
+
+def get_datasets(**kwargs):
+    global db_connection
+    if db_connection is None:
+        db_connection = DatabaseConnection(**kwargs)
+    return list(db_connection.client.list_datasets())
+
+
+def get_datasets(**kwargs):
+    global db_connection
+    if db_connection is None:
+        db_connection = DatabaseConnection(**kwargs)
+    return list(db_connection.client.list_datasets())
