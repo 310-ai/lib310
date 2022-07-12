@@ -3,3 +3,4 @@
 .vscode/
 google-service.json
 *.egg-info
+dist/

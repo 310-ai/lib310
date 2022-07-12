@@ -2,7 +2,7 @@
 name = "lib310"
 version = "0.1.5"
 description = "lib310 Python Package"
-authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>"]
+authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>", "Saman Fekri <saman@310.ai>"]
 
 [tool.poetry.dependencies]
 python = ">3.8,<3.11"
