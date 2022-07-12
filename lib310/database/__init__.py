@@ -52,18 +52,19 @@ def list_tables(**kwargs):
 
 def summary(**kwargs):
     global db_connection
+    import pandas as pd
     all_datasets = list_tables()
     result = []
     for dataset_id, tables in all_datasets.items():
         for table in tables:
             row = {}
             temp = db_connection.client.get_table(table.full_table_id.replace(':', '.'))
-            row['dataset'] = dataset_id
+            row['dataset'] = dataset_id.split('_')[-1].upper()
             row['table'] = temp.table_id
             row['num_rows'] = temp.num_rows
             row['num_cols'] = len(temp.schema)
             size = temp.num_bytes
-            for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+            for x in ['B', 'KB', 'MB', 'GB', 'TB']:
                 if size < 1024.0:
                     row['size'] = "%3.1f %s" % (size, x)
                     break
@@ -72,10 +73,9 @@ def summary(**kwargs):
             result.append(row)
 
     print_it = kwargs.get('print')
+    df = pd.DataFrame(result)
     if print_it is None or print_it is True:
-        import pandas as pd
-        df = pd.DataFrame(result)
-        print(df)
-    return result
+        print(df.to_string(index = False))
+    return df
 
 
