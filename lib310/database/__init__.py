@@ -42,10 +42,40 @@ def list_tables(**kwargs):
 
     if not isinstance(dataset_ids, list):
         dataset_ids = [dataset_ids]
-
-    if len(dataset_ids) == 1:
         return list(db_connection.client.list_tables(dataset_ids[0]))
+
     result = {}
     for dataset_id in dataset_ids:
         result[dataset_id] = list(db_connection.client.list_tables(dataset_id))
     return result
+
+
+def summary(**kwargs):
+    global db_connection
+    all_datasets = list_tables()
+    result = []
+    for dataset_id, tables in all_datasets.items():
+        for table in tables:
+            row = {}
+            temp = db_connection.client.get_table(table.full_table_id.replace(':', '.'))
+            row['dataset'] = dataset_id
+            row['table'] = temp.table_id
+            row['num_rows'] = temp.num_rows
+            row['num_cols'] = len(temp.schema)
+            size = temp.num_bytes
+            for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+                if size < 1024.0:
+                    row['size'] = "%3.1f %s" % (size, x)
+                    break
+                size /= 1024.0
+                row['size'] = size
+            result.append(row)
+
+    print_it = kwargs.get('print')
+    if print_it is None or print_it is True:
+        import pandas as pd
+        df = pd.DataFrame(result)
+        print(df)
+    return result
+
+

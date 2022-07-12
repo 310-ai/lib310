@@ -23,3 +23,6 @@ class TestDB(unittest.TestCase):
         self.assertGreater(len(tables), 0)
         tables = lib310.db.list_tables(dataset_ids='0_go')
         self.assertGreater(len(tables), 0)
+
+    def test_summary(self):
+        tables = lib310.db.summary()
