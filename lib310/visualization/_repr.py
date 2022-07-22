@@ -45,6 +45,30 @@ def umap(model_results, color: Optional[str] = None, plot_type: Optional[str] = 
         sc.pl.umap(adata, color='color' if color else None, **kwargs)
 
 
+def show_umap(features):
+    from umap import UMAP
+    import plotly.express as px
+
+    umap_2d = UMAP(n_components=2, init='random', random_state=0)
+    umap_3d = UMAP(n_components=3, init='random', random_state=0)
+
+    proj_2d = umap_2d.fit_transform(features)
+    proj_3d = umap_3d.fit_transform(features)
+
+    fig_2d = px.scatter(
+        proj_2d, x=0, y=1,
+        color=0,
+    )
+    fig_3d = px.scatter_3d(
+        proj_3d, x=0, y=1, z=2,
+        color=0,
+    )
+    fig_3d.update_traces(marker_size=5)
+
+    fig_2d.show()
+    fig_3d.show()
+
+
 def pca(model_results, color: Optional[str] = None, plot_type: Optional[str] = None, **kwargs):
     sc.settings.set_figure_params(dpi=kwargs.pop('dpi', 100))
     if plot_type == '1_vs_all':
