@@ -20,8 +20,7 @@ def visualize_all_datasets(df):
 
 
 def visualize_dataset(df, name):
-    fig = plt.figure()
-    ax = fig.add_axes([0.06, 0.06, 0.94, 0.94])
+    fig, ax = plt.subplots()
     ax.bar(df['table'], df['num_rows'], color=sns.color_palette("Spectral", len(df['table'])).as_hex())
     ax.axis("on")
     ax.relim()
