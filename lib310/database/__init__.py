@@ -81,7 +81,7 @@ def summary(**kwargs):
 
 
 def visualize(name):
-    df = summary(print_it=False)
+    df = summary(print=False)
     if name.lower() == 'datasets':
         ds = df.where(df['num_rows'] > 0).groupby('dataset').sum().dropna()
         visualize_all_datasets(ds)
