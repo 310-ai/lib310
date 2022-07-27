@@ -26,3 +26,7 @@ class TestDB(unittest.TestCase):
 
     def test_summary(self):
         tables = lib310.db.summary()
+
+    def test_db_visualize(self):
+        # tables = lib310.db.summary()
+        lib310.db.visualize('datasets')

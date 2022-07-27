@@ -1,5 +1,10 @@
+import matplotlib.pyplot as plt
+import seaborn as sns
+from .charts.bubble_chart import BubbleChart
+from .charts.constants import Component
 from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
+import math
 
 db_connection: DatabaseConnection = None
 
@@ -78,4 +83,22 @@ def summary(**kwargs):
         print(df.to_string(index = False))
     return df
 
+
+def visualize(component):
+    if component.lower() != Component.DATASETS.value:
+        return
+    df = summary()
+    ds = df.where(df['num_rows'] > 0).groupby('dataset').sum().dropna()
+    bubble_chart = BubbleChart(area=[math.log(x) for x in ds['num_rows']],
+                               bubble_spacing=0.1)
+    bubble_chart.collapse()
+
+    fig, ax = plt.subplots(subplot_kw=dict(aspect="equal"))
+    bubble_chart.plot(ax, list(ds.index), sns.color_palette("Spectral", len(list(ds.index))).as_hex())
+    ax.axis("off")
+    ax.relim()
+    ax.autoscale_view()
+    ax.set_title('Dataset (log)')
+
+    plt.show()
 
