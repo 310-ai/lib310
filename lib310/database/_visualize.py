@@ -26,6 +26,6 @@ def visualize_dataset(df, name):
     ax.axis("on")
     ax.relim()
     ax.autoscale_view()
-    ax.set_title(f'Dataset ({name})')
+    ax.set_title('Dataset (' + name + ')')
     ax.set_yscale('log')
     plt.show()
