@@ -89,4 +89,4 @@ def visualize(name):
     tables = df.where(df['dataset'] == name.upper()).dropna()
     if len(tables) <= 0:
         return
-    visualize_dataset(tables)
+    visualize_dataset(tables, name)
