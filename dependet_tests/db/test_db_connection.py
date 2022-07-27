@@ -29,4 +29,4 @@ class TestDB(unittest.TestCase):
 
     def test_db_visualize(self):
         # tables = lib310.db.summary()
-        lib310.db.visualize('datasets')
+        lib310.db.visualize('go')
