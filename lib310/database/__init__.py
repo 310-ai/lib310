@@ -80,8 +80,13 @@ def summary(**kwargs):
     return df
 
 
-def visualize(name):
+def visualize(name=None):
     df = summary(print=False)
+    if name is None:
+        ds = df.where(df['num_rows'] > 0).dropna()
+        print(ds)
+        visualize_all(ds)
+        return
     if name.lower() == 'datasets':
         ds = df.where(df['num_rows'] > 0).groupby('dataset').sum().dropna()
         visualize_all_datasets(ds)
