@@ -44,6 +44,21 @@ def visualize_all(df):
     leaves = df.select_dtypes("object").apply("/".join, axis=1).values
 
     fig = px.treemap(df, path=['310 db', 'dataset', 'table'], values='weight', hover_data=["size"])
+    bg_colors = []
+    font_sizes = []
+    for sector in fig.data[0]['ids']:
+        if len(sector.split('/')) == 3:
+            bg_colors.append(color_dataset(sector.split('/')[1]))
+            font_sizes.append(18)
+            continue
+        bg_colors.append('transparent')
+        font_sizes.append(14)
+
+    fig.data[0]['marker']['colors'] = bg_colors
+    fig.data[0].textposition = 'middle center'
+    fig.data[0].texttemplate = "<span style='font-size: 18px;'><b> %{label} </b></span>"
+    fig.data[0]['textfont']['color'] = ['#FFFFFF' for sector in fig.data[0]['ids'] if len(sector.split("/")) == 3]
+    fig.update_layout(margin=dict(t=50, l=25, r=25, b=25))
     # fig.update_traces(hovertemplate='%{customdata[0]}')
     # fig.data[0].customdata = [
     #     v if fig.data[0].ids[i]
@@ -51,3 +66,18 @@ def visualize_all(df):
     #     for i, v in enumerate(fig.data[0].customdata)
     # ]
     fig.show()
+
+
+def color_dataset(name):
+    pallete = {
+        'UNIPROT': '#D0534E',
+        'GO': '#F29D38',
+        'INTERPRO': '#AFD562',
+        'STRINGS': '#51A2D1',
+        'MID': '#693BD7',
+        'METACLUST': '#A74CD8',
+        'SANDBOX': 'CD507B'
+    }
+    if name not in pallete:
+        return '#D0534E'
+    return pallete[name]
