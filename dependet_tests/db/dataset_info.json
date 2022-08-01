@@ -1,0 +1,54 @@
+{
+  "0_uniprot": {
+    "name": "UNIPROT",
+    "treemap": {
+      "children": {
+        "color": "#E04848"
+      }
+    }
+  },
+  "0_interpro": {
+    "name": "INTERPRO",
+    "treemap": {
+      "children": {
+        "color": "#FF9900"
+      }
+    }
+  },
+  "0_strings": {
+    "name": "STRING",
+    "treemap": {
+      "children": {
+        "color": "#A7DD4F"
+      }
+    }
+  },
+  "0_go": {
+    "name": "GO",
+    "treemap": {
+      "children": {
+        "color": "#2FA7DB"
+      }
+    }
+  },
+  "0_metaclust": {
+    "name": "METACLUST",
+    "treemap": {
+      "children": {
+        "color": "#7330DF"
+      }
+    }
+  },
+  "mid": {
+    "name": "MIDSTREAM",
+    "treemap": {
+      "show": false
+    }
+  },
+  "sandbox": {
+    "name": "SANDBOX",
+    "treemap": {
+      "show": false
+    }
+  }
+}

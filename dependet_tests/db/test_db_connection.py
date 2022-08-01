@@ -32,3 +32,7 @@ class TestDB(unittest.TestCase):
         lib310.db.visualize()
         # lib310.db.visualize('go')
         # lib310.db.visualize('interpro')
+
+
+    def test_db_gather_info(self):
+        lib310.db.gather_info()

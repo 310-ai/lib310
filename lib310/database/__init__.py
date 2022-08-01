@@ -1,6 +1,8 @@
 from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
+import io
+import json
 
 db_connection: DatabaseConnection = None
 
@@ -96,3 +98,64 @@ def visualize(name=None):
     if len(tables) <= 0:
         return
     visualize_dataset(tables, name)
+
+
+def gather_info(**kwargs):
+    global db_connection
+    if db_connection is None:
+        db_connection = DatabaseConnection(**kwargs)
+    client = db_connection.client
+
+    with open('dataset_info.json', 'r') as f:
+        dict_info = json.load(f)
+    datasets = list(client.list_datasets())
+    result = []
+    for dataset in datasets:
+        if dataset.dataset_id == 'sandbox':
+            continue
+
+        tables = list(db_connection.client.list_tables(dataset.dataset_id))
+        for t in tables:
+            table = client.get_table(t.full_table_id.replace(':', '.'))
+            schema = io.StringIO("")
+            client.schema_to_json(table.schema, schema)
+            item = {
+                'dataset': dataset.dataset_id,
+                'dataset_name': extract_value(f'{dataset.dataset_id}.name', dict_info, default=dataset.dataset_id),
+                'table': t.table_id,
+                'full_table_id': t.full_table_id,
+                'table_name': extract_value(f'{dataset.dataset_id}.tables.{t.table_id}.name', dict_info, default=t.table_id),
+                'num_rows': table.num_rows,
+                'num_cols': len(table.schema),
+                'size': table.num_bytes,
+                'schema': json.dumps(schema.getvalue()),
+                'treemap': {
+                    'show': extract_value(f'{dataset.dataset_id}.treemap.show', dict_info, default=True),
+                    'color': extract_value(f'{dataset.dataset_id}.treemap.children.color', dict_info, default='#FF0000'),
+                    'fontsize': extract_value(f'{dataset.dataset_id}.treemap.children.size', dict_info, default=18),
+                    'textcolor': extract_value(f'{dataset.dataset_id}.treemap.children.size', dict_info, default='#FFFFFF'),
+                },
+                'last_modified': table.modified.timestamp() * 1000,
+            }
+            item['treemap']['show'] = extract_value(f'{dataset.dataset_id}.treemap.tables.{t.table_id}.show', dict_info, default=item['treemap']['show'])
+            item['treemap']['color'] = extract_value(f'{dataset.dataset_id}.treemap.tables.{t.table_id}.color', dict_info, default=item['treemap']['color'])
+            item['treemap']['fontsize'] = extract_value(f'{dataset.dataset_id}.treemap.tables.{t.table_id}.fontsize', dict_info, default=item['treemap']['fontsize'])
+            item['treemap']['textcolor'] = extract_value(f'{dataset.dataset_id}.treemap.tables.{t.table_id}.textcolor', dict_info, default=item['treemap']['textcolor'])
+
+            result.append(item)
+    result = [json.dumps(record) for record in result]
+
+    with open('info.json', 'w') as obj:
+        for i in result:
+            obj.write(i + '\n')
+
+
+
+def extract_value(key, dictionary, default=None):
+    parts = key.split('.')
+    value = dictionary
+    for i in range(len(parts)):
+        if parts[i] not in value:
+            return default
+        value = value[parts[i]]
+    return value
