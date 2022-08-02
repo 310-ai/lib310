@@ -29,6 +29,6 @@ class TestDB(unittest.TestCase):
 
     def test_db_visualize(self):
         # tables = lib310.db.summary()
-        lib310.db.visualize()
-        # lib310.db.visualize('go')
-        # lib310.db.visualize('interpro')
+        # lib310.db.visualize()
+        lib310.db.visualize(dataset='go')
+        lib310.db.visualize(dataset='interpro')
