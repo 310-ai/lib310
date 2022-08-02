@@ -45,4 +45,4 @@ class Client(bigquery.Client):
 
     @property
     def single_query_limit(self):
-        return 5 * 10 ** 11
+        return 3 * 10 ** 12
