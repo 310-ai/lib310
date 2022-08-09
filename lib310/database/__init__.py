@@ -3,7 +3,7 @@ from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
 
 db_connection: DatabaseConnection = None
-db_info = 'sandbox.info'
+db_info = 'system.info'
 
 
 def fetch(*args, **kwargs):
