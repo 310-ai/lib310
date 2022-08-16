@@ -56,7 +56,7 @@ def draw_term_family(id):
     FROM
       `pfsdb3.1_go.term_term_path`
     WHERE
-      child_id = {id}
+      child_id = "{id}"
     """.format(id=id))
     import graphviz
     from collections import defaultdict
