@@ -99,6 +99,7 @@ def draw_term_family(id):
                 u.edge(x[4:11], y[4:11], color=z['color'], style=z['style'])
     u.view()
     u
+    return u
 
 
 def show_umap(features):
