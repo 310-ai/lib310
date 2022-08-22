@@ -58,24 +58,31 @@ def draw_term_family(id):
     WHERE
       child_id = "{id}"
     """.format(id=id))
-    import graphviz
+    # import graphviz
     from collections import defaultdict
 
     relationtype = {
-        'is_a': {'color': 'black', 'style': 'solid'},
+        'is_a': {'color': 'black', 'style': 'bold'},
         'part_of': {'color': 'blue', 'style': 'dashed'},
         'regulates': {'color': 'darkorange', 'style': 'bold'},
-        'positively_regulates': {'color': 'chartreuse1', 'style': 'bold'},
+        'positively_regulates': {'color': 'darkgreen', 'style': 'bold'},
         'negatively_regulates': {'color': 'red', 'style': 'bold'},
         'occurs_in': {'color': 'darkslategray4', 'style': 'bold'},
     }
 
     defultrel = {'color': 'gray', 'style': 'dotted'}
 
+    nodes = {}
     u = graphviz.Digraph('unix', filename='unix.gv')
-    u.attr(size='100,100')
-    u.attr('node', shape='record')
+    u.attr(size='1000,1000')
+    u.attr(ranksep="2")
+    u.attr('node', shape='plaintext')
+    u.attr('node', font='helvetica')
 
+    res = lib310.db.fetch(query="""SELECT go_id,name FROM `pfsdb3.1_go.terms`  """)
+    node_names = {}
+    for row in res.values.tolist():
+        node_names[row[0]] = row[1]
     edgeList = defaultdict(set)
     rel = defaultdict(dict)
     data = results[['pathList']].values.tolist()
@@ -92,11 +99,29 @@ def draw_term_family(id):
             z = rel[x][y].replace(' " ', " ")
             z = z.strip(' " " ')
             z = z.replace("'", '')
+            X = "" + x[4:11]
+            Y = "" + y[4:11]
+            if X not in nodes:
+                nodes[X] = node_names["GO:" + X]
+            if Y not in nodes:
+                nodes[Y] = node_names["GO:" + Y]
             if z in relationtype.keys():
                 u.edge(x[4:11], y[4:11], color=relationtype[z]['color'], style=relationtype[z]['style'])
             else:
                 z = defultrel
                 u.edge(x[4:11], y[4:11], color=z['color'], style=z['style'])
+    for node in nodes:
+        u.node(node, label='''<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="2" CELLPADDING="3">
+      <TR>
+
+        <TD BGCOLOR="deepskyblue3" COLSPAN="1">{id}</TD>
+      </TR>
+
+      <TR>
+        <TD  COLSPAN="1">{name}</TD>
+      </TR>
+    </TABLE>>'''.format(id=node, name=node_names["GO:" + node]))
     return u
 
 
