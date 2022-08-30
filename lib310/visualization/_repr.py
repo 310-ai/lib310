@@ -1,6 +1,35 @@
+from collections import defaultdict
 from typing import Optional
 
 import scanpy as sc
+
+
+
+class Graph:
+    def __init__(self, vertices):
+        self.graph = defaultdict(list)
+        self.ids = defaultdict(list)
+        self.V = vertices
+        self.visit = {}
+        self.label = {}
+        self.paths = defaultdict(list)
+
+    def add_edge(self, u, v):
+        self.graph[u].append(v)
+        self.ids[u] = u
+        self.ids[v] = v
+        self.visit[u] = False
+        self.visit[v] = False
+
+    def dfs_util(self, v, label):
+        if self.label.get(v) is None:
+            self.label[v] = label
+        else:
+            self.label[v] = max(self.label[v],label)
+
+        for x in self.graph[v]:
+            self.dfs_util(x,self.label[v]+1)
+
 
 
 def _construct_adata(model_results, color: Optional[str] = None, **kwargs):
@@ -48,6 +77,14 @@ def umap(model_results, color: Optional[str] = None, plot_type: Optional[str] = 
 
 
 def draw_term_family(id):
+    query = """SELECT
+          pathList
+        FROM
+          `pfsdb3.1_go.term_term_path`
+        WHERE
+          child_id = "{id}";""".format(id=id)
+    results = lib310.db.fetch(query=query)
+
     import lib310
     import graphviz
 
@@ -61,6 +98,7 @@ def draw_term_family(id):
     # import graphviz
     from collections import defaultdict
 
+    g = Graph(len(results))
     relationtype = {
         'is_a': {'color': 'black', 'style': 'bold'},
         'part_of': {'color': 'blue', 'style': 'dashed'},
@@ -107,21 +145,52 @@ def draw_term_family(id):
                 nodes[Y] = node_names["GO:" + Y]
             if z in relationtype.keys():
                 u.edge(x[4:11], y[4:11], color=relationtype[z]['color'], style=relationtype[z]['style'])
+                g.add_edge(y[4:11], x[4:11])
             else:
                 z = defultrel
                 u.edge(x[4:11], y[4:11], color=z['color'], style=z['style'])
+                # g.add_edge( y[4:11],x[4:11])
+
+    g.dfs_util(id[3:], 1)
+
+    i = 1
+    while i < 1000:
+        with u.subgraph() as s:
+            s.attr(rank='same')
+
+            for x in g.label.keys():
+                if g.label[x] == i:
+                    # s.node(x)
+                    name = "GO:" + str(x)
+                    s.node(x, label='''<
+                    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="2" CELLPADDING="3">
+                      <TR>
+
+                        <TD BGCOLOR="deepskyblue3" COLSPAN="1">{id}</TD>
+                      </TR>
+
+                      <TR>
+                        <TD  COLSPAN="1">{name}</TD>
+                      </TR>
+                    </TABLE>>'''.format(id=x, name=node_names[name]))
+
+                    # print(str(x)+': '+str(i))
+
+        i = i + 1
+
     for node in nodes:
-        u.node(node, label='''<
-    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="2" CELLPADDING="3">
-      <TR>
+        if node not in g.label.keys():
+            u.node(node, label='''<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="2" CELLPADDING="3">
+          <TR>
 
-        <TD BGCOLOR="deepskyblue3" COLSPAN="1">{id}</TD>
-      </TR>
+            <TD BGCOLOR="deepskyblue3" COLSPAN="1">{id}</TD>
+          </TR>
 
-      <TR>
-        <TD  COLSPAN="1">{name}</TD>
-      </TR>
-    </TABLE>>'''.format(id=node, name=node_names["GO:" + node]))
+          <TR>
+            <TD  COLSPAN="1">{name}</TD>
+          </TR>
+        </TABLE>>'''.format(id=node, name=node_names["GO:" + node]))
     return u
 
 
