@@ -77,6 +77,8 @@ def umap(model_results, color: Optional[str] = None, plot_type: Optional[str] = 
 
 
 def draw_term_family(id):
+    import lib310
+    import graphviz
     query = """SELECT
           pathList
         FROM
@@ -85,8 +87,7 @@ def draw_term_family(id):
           child_id = "{id}";""".format(id=id)
     results = lib310.db.fetch(query=query)
 
-    import lib310
-    import graphviz
+
 
     results = lib310.db.fetch(query="""SELECT
       pathList
