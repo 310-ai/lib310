@@ -14,8 +14,7 @@ def download(pdb_id, file_type, out_dir):
 
 def download_list_pdb(pdb_list, type_list, out_dir):
     import os
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
+    os.makedirs(out_dir,exist_ok=True)
     for pdb in pdb_list:
         for tp in type_list:
             download(pdb, tp, out_dir)
