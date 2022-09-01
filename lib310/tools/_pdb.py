@@ -8,16 +8,14 @@ def download(pdb_id, file_type, out_dir):
         pdb_id = pdb_id[:-2]
     url = "{BASE_URL}/{pdb_id}.{type}.gz".format(pdb_id=pdb_id, BASE_URL=BASE_URL, type=file_type)
     res = requests.get(url)
-    outfile = "{out_dir}/{pdb_id}.{type}.gz".format(pdb_id=pdb_id, type=file_type, outdir=out_dir)
+    outfile = "{out_dir}/{pdb_id}.{type}.gz".format(pdb_id=pdb_id, type=file_type, out_dir=out_dir)
     open(outfile, "wb").write(res.content)
 
 
 def download_list_pdb(pdb_list, type_list, out_dir):
     import os
-    dir_exist = os.path.exists(out_dir)
-    if not dir_exist:
-        # Create a new directory because it does not exist
-        os.mkdir(out_dir)
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
     for pdb in pdb_list:
         for tp in type_list:
             download(pdb, tp, out_dir)
