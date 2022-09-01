@@ -1,5 +1,8 @@
 import requests
+
 BASE_URL = "https://files.rcsb.org/download"
+
+
 def download(pdb_id, file_type, out_dir):
     if pdb_id.find('_'):
         pdb_id = pdb_id[:-2]
@@ -7,8 +10,18 @@ def download(pdb_id, file_type, out_dir):
     res = requests.get(url)
     outfile = "{out_dir}/{pdb_id}.{type}.gz".format(pdb_id=pdb_id, type=file_type, out_dir=out_dir)
     open(outfile, "wb").write(res.content)
+
+
 def download_list_pdb(pdb_list, type_list, out_dir):
+    import os
+    try:
+        os.makedirs(out_dir)
+    except FileExistsError:
+        print('directory already exists')
+
     for pdb in pdb_list:
         for tp in type_list:
             download(pdb, tp, out_dir)
+
+
 # download_list_pdb(["7niu_A", "6s7p_A"], ["pdb", "pdb1", "xml"],"./data")
