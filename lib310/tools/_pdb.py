@@ -15,7 +15,7 @@ def download(pdb_id, file_type, out_dir):
 def download_list_pdb(pdb_list, type_list, out_dir):
     import os
     try:
-        os.makedirs(out_dir, exist_ok=True)
+        os.makedirs(out_dir)
     except FileExistsError:
         print('directory already exists')
 
