@@ -113,7 +113,7 @@ def draw_term_family(id):
 
     nodes = {}
     u = graphviz.Digraph('unix', filename='unix.gv')
-    u.attr(size='10,10')
+    u.attr(size='1000,1000')
     u.attr(ranksep="2")
     u.attr('node', shape='plaintext')
     u.attr('node', font='helvetica')
