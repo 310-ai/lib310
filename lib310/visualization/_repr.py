@@ -268,3 +268,18 @@ def tsne(model_results, color: Optional[str] = None, plot_type: Optional[str] = 
             sc.pl.tsne(adata, color=term, **kwargs)
     else:
         sc.pl.tsne(adata, color='color' if color else None, frameon=False, **kwargs)
+
+
+def visualize_3model(fpath, chain_id):
+        import py3Dmol
+
+        with open(fpath) as ifile:
+            system = "".join([x for x in ifile])
+
+        view = py3Dmol.view(width=600, height=400)
+        view.addModelsAsFrames(system)
+        view.setStyle({'model': -1, 'chain': chain_id}, {"cartoon": {'color': 'spectrum'}})
+        view.setBackgroundColor(0xe6ecf5)
+        view.zoomTo()
+        view.show()
+        return view
