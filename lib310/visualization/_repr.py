@@ -282,4 +282,3 @@ def visualize_3model(fpath, chain_id):
         view.setBackgroundColor(0xe6ecf5)
         view.zoomTo()
         view.show()
-        return view
