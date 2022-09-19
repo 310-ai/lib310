@@ -53,7 +53,7 @@ def download_from_alphafold(source_blob_name, destination_file_name):
     )
     SELECT CONCAT('gs://public-datasets-deepmind-alphafold/', files) as files
     FROM file_rows LIMIT 10"""
-    bucket_name = "gs://public-datasets-deepmind-alphafold/"
+    bucket_name = "public-datasets-deepmind-alphafold"
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(source_blob_name)
