@@ -34,4 +34,33 @@ def get_pdb_parser(pdb_name, pdb_file):
     from Bio.PDB import PDBParser
     return PDBParser().get_structure(pdb_name, pdb_file)
 
+
 # download_list_pdb(["7niu_A", "6s7p_A"], ["pdb", "pdb1", "xml"],"./data")
+
+
+def download_from_alphafold(source_blob_name, destination_file_name):
+    from google.cloud import storage
+    query = """with file_rows AS (
+      with file_cols AS (
+        SELECT
+          CONCAT(entryID, '-model_v', latestVersion, '.cif') as m,
+          CONCAT(entryID, '-predicted_aligned_error_v', latestVersion, '.json') as p
+        FROM bigquery-public-data.deepmind_alphafold.metadata
+        WHERE organismScientificName = "Homo sapiens"
+          AND (fractionPlddtVeryHigh + fractionPlddtConfident) > 0.5
+      )
+      SELECT * FROM file_cols UNPIVOT (files for filetype in (m, p))
+    )
+    SELECT CONCAT('gs://public-datasets-deepmind-alphafold/', files) as files
+    FROM file_rows LIMIT 10"""
+    bucket_name = "gs://public-datasets-deepmind-alphafold/"
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(source_blob_name)
+    blob.download_to_filename(destination_file_name)
+    print(
+        "Downloaded storage object {} from bucket {} to local file {}.".format(
+            source_blob_name, bucket_name, destination_file_name
+        )
+    )
+# download_blob("public-datasets-deepmind-alphafold","AF-J3QLM0-F1-model_v3.cif","a.cif")
