@@ -1,28 +1,28 @@
 [tool.poetry]
 name = "lib310"
-version = "0.1.50"
+version = "0.1.51"
 description = "lib310 Python Package"
 authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>", "Saman Fekri <saman@310.ai>", "Ismail Naderi <inaderi@310.ai>"]
 
 [tool.poetry.dependencies]
-python = ">3.8,<3.11"
-google-cloud = "^0.34.0"
-google-cloud-bigquery = "^3.2.0"
-biopython = "^1.79"
-rich = "^12.4.4"
-numpy = "<1.23.0"
-scanpy = "^1.9.1"
-transformers = "^4.20.1"
-torch = "^1.12.0"
-pandas = "^1.4.3"
-seaborn = "^0.11.2"
-matplotlib = "^3.5.2"
+python = ">3.8"
+google-cloud = ">0.34.0"
+google-cloud-bigquery = ">3.2.0"
+biopython = ">1.79"
+rich = ">12.4.4"
+numpy = ">1.23.0"
+scanpy = ">1.9.1"
+transformers = ">4.20.1"
+torch = ">1.12.0"
+pandas = ">1.4.3"
+seaborn = ">0.11.2"
+matplotlib = ">3.5.2"
 plotly = ">5.4.0"
-graphviz = "0.11"
+graphviz = ">0.11"
 
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
+pytest = ">7.1.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
