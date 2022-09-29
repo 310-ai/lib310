@@ -31,17 +31,33 @@ class DatabaseConnection(object):
             print(f'{column_name}:{column_info["type"]}')
 
     def query(self, *args, **query_params):
-        table_name = query_params.pop('table_name', 'pfsdb3.0_uniprot.uniref')
+        '''
+        :param args: can have a string which is query
+        :param query_params: if query not mentioned we read other query parameters other wise we only read query
+        :param - query
+        :param - table_name :default=pfsdb3.0_go.gaf
+        :param - limit      :default=100
+        :return:
+        '''
 
-        if table_name != self.table_name:
-            self.table_name = table_name
-            self.table = self.client.get_table(table_name)
-            self.table_schema = {schema.name: {'type': schema.field_type, } for schema in
-                                 self.table.schema} if self.table else {}
-            if self.verbose:
-                print(f'Successfully connected to {table_name} with {self.table.num_rows} rows!')
+        has_query = False
+        if 'query' in query_params.keys():
+            has_query = True
+            query_results = self.client.query(query_params.get('query')).result().to_dataframe()
+        if not has_query and len(args) > 0:
+            has_query = True
+            query_results = self.client.query(args[0]).result().to_dataframe()
 
-        if 'query' not in query_params.keys():
+        if not has_query:
+            table_name = query_params.pop('table_name', 'pfsdb3.0_go.gaf')
+            if table_name != self.table_name:
+                self.table_name = table_name
+                self.table = self.client.get_table(table_name)
+                self.table_schema = {schema.name: {'type': schema.field_type, } for schema in
+                                     self.table.schema} if self.table else {}
+                if self.verbose:
+                    print(f'Successfully connected to {table_name} with {self.table.num_rows} rows!')
+
             query_string = f"SELECT * FROM `{table_name}`"
 
             force_limit = query_params.pop('force_limit', True)
@@ -76,10 +92,8 @@ class DatabaseConnection(object):
             if force_limit:
                 query_string += f' LIMIT {limit}'
 
+            print(query_string)
             query_results = self.client.query(query_string, job_config=job_config).result().to_dataframe()
-
-        else:
-            query_results = self.client.query(query_params.get('query')).result().to_dataframe()
 
         query_results = ProteinDataTable.from_pandas(query_results)
         return query_results

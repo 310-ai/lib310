@@ -9,8 +9,11 @@ class TestDB(unittest.TestCase):
         dotenv.load_dotenv('.env')
 
     def test_bigquery_select(self):
-        seqs = lib310.db.fetch(query="SELECT * FROM `pfsdb3.0_go.gaf` LIMIT 10")
-        self.assertEqual(len(seqs), 10)
+        seqs1 = lib310.db.fetch(query="SELECT GO_ID FROM `pfsdb3.0_go.gaf` LIMIT 10")
+        seqs2 = lib310.db.fetch("SELECT GO_ID FROM `pfsdb3.0_go.gaf` LIMIT 10")
+        self.assertEqual(len(seqs1), 10)
+        self.assertEqual(len(seqs2), 10)
+
 
     def test_list_datasets(self):
         datasets = lib310.db.list_datasets()
