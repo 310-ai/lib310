@@ -1,11 +1,8 @@
-import json
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 import math
 from .charts.bubble_chart import BubbleChart
 import plotly.express as px
-import numpy as np
 import pandas as pd
 from ._functions import *
 

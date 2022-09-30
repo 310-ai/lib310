@@ -31,14 +31,14 @@ class DatabaseConnection(object):
             print(f'{column_name}:{column_info["type"]}')
 
     def query(self, *args, **query_params):
-        '''
+        """
         :param args: can have a string which is query
         :param query_params: if query not mentioned we read other query parameters other wise we only read query
         :param - query
         :param - table_name :default=pfsdb3.0_go.gaf
         :param - limit      :default=100
         :return:
-        '''
+        """
 
         has_query = False
         if 'query' in query_params.keys():
