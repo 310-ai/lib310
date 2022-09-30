@@ -7,7 +7,7 @@ import torch
 from transformers.pipelines.base import Dataset
 
 from ._base import BaseMLTask
-from transformers import AutoModel, AutoTokenizer, BertForSequenceClassification
+from transformers import AutoTokenizer, BertForSequenceClassification
 
 from ._io import GoAnnotationOutput
 from transformers import FeatureExtractionPipeline
