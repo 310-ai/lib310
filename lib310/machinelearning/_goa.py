@@ -1,19 +1,16 @@
 import os
 
-from typing import List, Optional
+from typing import Optional
 
 from tqdm import tqdm
 import torch
 from transformers.pipelines.base import Dataset
 
 from ._base import BaseMLTask
-from transformers import AutoModel, AutoTokenizer, BertForSequenceClassification
+from transformers import AutoTokenizer, BertForSequenceClassification
 
 from ._io import GoAnnotationOutput
 from transformers import FeatureExtractionPipeline
-
-from ..data import ProteinDataTable
-from ..database._constants import CONSTATNS
 
 SUPPORTED_BERT_MODELS = ['prot_bert']
 MODELS_MAP = {

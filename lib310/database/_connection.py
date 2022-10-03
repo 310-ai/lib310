@@ -1,8 +1,5 @@
 import os
 
-from google.cloud import bigquery
-
-from .client import Client
 from ..data._base import ProteinDataTable
 
 
@@ -12,6 +9,8 @@ def set_gcloud_key_path(path: str):
 
 class DatabaseConnection(object):
     def __init__(self, **kwargs):
+        from .client import Client  # This import is here for lazy load
+
         if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ.keys():
             raise Exception(
                 'You must set BigQuery credentials first! try using `lib310.db.set_gcloud_key_path(path) method.`')
@@ -31,14 +30,15 @@ class DatabaseConnection(object):
             print(f'{column_name}:{column_info["type"]}')
 
     def query(self, *args, **query_params):
-        '''
+        from google.cloud import bigquery # This import is here for lazy load
+        """
         :param args: can have a string which is query
         :param query_params: if query not mentioned we read other query parameters other wise we only read query
         :param - query
         :param - table_name :default=pfsdb3.0_go.gaf
         :param - limit      :default=100
         :return:
-        '''
+        """
 
         has_query = False
         if 'query' in query_params.keys():

@@ -5,7 +5,6 @@ from ._visualize import *
 db_connection: DatabaseConnection = None
 db_info = 'system.info'
 
-
 def fetch(*args, **kwargs):
     global db_connection
     if db_connection is None:
