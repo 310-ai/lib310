@@ -1,7 +1,5 @@
 import os
 
-from ..data._base import ProteinDataTable
-
 
 def set_gcloud_key_path(path: str):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = path
@@ -31,6 +29,7 @@ class DatabaseConnection(object):
 
     def query(self, *args, **query_params):
         from google.cloud import bigquery # This import is here for lazy load
+        from ..data._base import ProteinDataTable # This import is here for lazy load
         """
         :param args: can have a string which is query
         :param query_params: if query not mentioned we read other query parameters other wise we only read query

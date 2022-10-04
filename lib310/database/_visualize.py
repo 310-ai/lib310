@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import seaborn as sns
 import math
 from .charts.bubble_chart import BubbleChart
 import plotly.express as px
@@ -9,6 +8,7 @@ from ._functions import *
 
 
 def visualize_all_datasets(df):
+    import seaborn as sns # added here for lazy load
     bubble_chart = BubbleChart(area=[math.log(x) for x in df['num_rows']],
                                bubble_spacing=0.1)
     bubble_chart.collapse()
@@ -24,6 +24,7 @@ def visualize_all_datasets(df):
 
 
 def visualize_dataset(df, name):
+    import seaborn as sns # added here for lazy load
     fig, ax = plt.subplots()
     ax.bar(df['table_name'], df['num_rows'], color=sns.color_palette("Spectral", len(df['table_name'])).as_hex())
     ax.axis("on")
