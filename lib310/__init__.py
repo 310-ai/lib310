@@ -2,12 +2,19 @@
 
 import logging
 
+from .lazy_loader import LazyLoader
+
 # from ._settings import settings
-from . import database as db
-from . import data
-from . import machinelearning as ml
-from . import tools as tools
-from . import visualization as plot
+# from . import database as db
+# from . import data
+# from . import machinelearning as ml
+# from . import tools as tools
+# from . import visualization as plot
+db = LazyLoader('db', globals(), 'lib310.database')
+data = LazyLoader('data', globals(), 'lib310.data')
+ml = LazyLoader('ml', globals(), 'lib310.machinelearning')
+tools = LazyLoader('tools', globals(), 'lib310.tools')
+plot = LazyLoader('plot', globals(), 'lib310.visualization')
 
 try:
     import importlib.metadata as importlib_metadata
