@@ -2,9 +2,14 @@ import time
 from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
+from datetime import datetime, timedelta
+import logging
 
 db_connection: DatabaseConnection = None
-db_info = 'system.info'
+__db_info = 'system.info'
+__db_gcs_cache = 'system.gcs_cache'
+
+log = logging.getLogger("lib310")
 
 def fetch(*args, **kwargs):
     global db_connection
@@ -56,7 +61,7 @@ def summary(**kwargs):
     global db_connection
     db_connector()
     client = db_connection.client
-    df = client.query(f"SELECT dataset_name, table_name, num_rows, num_cols, size FROM `{db_info}`").to_dataframe()
+    df = client.query(f"SELECT dataset_name, table_name, num_rows, num_cols, size FROM `{__db_info}`").to_dataframe()
 
     print_it = kwargs.get('print')
     if print_it is None or print_it is True:
@@ -73,12 +78,12 @@ def visualize(**kwargs):
     if name is None:
         df = client.query(f"""
                 SELECT dataset, dataset_name, table, table_name, num_rows, num_cols, size, treemap
-                FROM `{db_info}`
+                FROM `{__db_info}`
                 WHERE treemap.show = true AND num_rows > 0""").to_dataframe()
 
         visualize_all(df)
         return
-    df = client.query(f"SELECT dataset_name, table_name, num_rows, num_cols, size FROM `{db_info}`").to_dataframe()
+    df = client.query(f"SELECT dataset_name, table_name, num_rows, num_cols, size FROM `{__db_info}`").to_dataframe()
     tables = df.where(df['dataset_name'] == name.upper()).dropna()
     if len(tables) <= 0:
         return
@@ -95,11 +100,30 @@ def db_connector():
 def cache_query(query, name):
     db = db_connector()
     table = db.client.build_temp_table()
-    print(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
-    time.sleep(10)
+    log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
 
     db.client.query_to_cached_dataset(query=query, destination=table)
-    print(f'Insert query {query} to {table.table_id}')
+    log.debug(f'Insert query {query} to {table.table_id}')
+
+    res = db.client.export_to_gcs(table, name)
+    log.debug(f'Export {table.table_id} to GCS(/{table.table_id}/{name}_*.csv)')
+
+    try:
+        info = db.client.insert_rows_json(__db_gcs_cache, [{
+            'name': name,
+            'folder': table.table_id,
+            'uri': res.destination_uris[0],
+            'length': res.destination_uri_file_counts[0],
+            'created_at': datetime.now().isoformat(),
+            'expired_at': (datetime.now() + timedelta(days=7)).isoformat()
+        }])
+        if len(info) > 0 and len(info[0]['errors']) != 0:
+            log.error(info[0]['errors'])
+    except Exception as e:
+        log.error(e)
+
 
     db.client.delete_table(table)
-    print(f'Deleted table {table.table_id} from {db.client.CACHE_DATASET}')
+    log.debug(f'Deleted table {table.table_id} from {db.client.CACHE_DATASET}')
+
+    return res.destination_uris, res.destination_uri_file_counts

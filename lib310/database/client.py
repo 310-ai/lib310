@@ -11,6 +11,7 @@ from . import _functions as fn
 class Client(bigquery.Client):
     PROJECT = 'pfsdb3'
     CACHE_DATASET = 'cached'
+    BUCKET_NAME = 'bigquery_1'
     def __init__(self):
         super(Client, self).__init__()
 
@@ -32,7 +33,6 @@ class Client(bigquery.Client):
         # if vol > self.single_query_limit:
         #     raise exceptions.VolumeLimitException()
         self.__write_usage_log(vol)
-        print(job_config.to_api_repr())
         return super(Client, self).query(query, job_config, job_id, job_id_prefix, location, project, retry, timeout, job_retry, api_method)
 
     def build_temp_table(self):
@@ -51,9 +51,7 @@ class Client(bigquery.Client):
                 random_string += fn.get_random_string(1)
         return table
 
-    def query_to_cached_dataset(self,
-                    query: str,
-                    destination: bigquery.Table):
+    def query_to_cached_dataset(self, query: str, destination: bigquery.Table):
 
         config = bigquery.QueryJobConfig(allow_large_results=True)
         config.destination = destination
@@ -62,6 +60,18 @@ class Client(bigquery.Client):
         query_result = self.query(query, job_config=config, api_method=enums.QueryApiMethod.INSERT)
         return query_result.result()
 
+    def export_to_gcs(self, table, name):
+        destination_uri = f"gs://{self.BUCKET_NAME}/{table.table_id}/{name}_*.csv"
+        dataset_ref = bigquery.DatasetReference(self.PROJECT, self.CACHE_DATASET)
+        table_ref = dataset_ref.table(table.table_id)
+        extract_job = self.extract_table(
+            table_ref,
+            destination_uri,
+            # Location must match that of the source table.
+            # location="US",
+        )  # API request
+        res = extract_job.result()  # Waits for job to complete.
+        return res
 
     def __write_usage_log(self, vol):
         try:
