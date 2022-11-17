@@ -1,6 +1,7 @@
 import unittest
-import lib310
 import dotenv
+import lib310
+import time
 
 from google.cloud import bigquery
 
@@ -32,3 +33,9 @@ class TestBqGcs(unittest.TestCase):
         print(
             "Exported {}:{}.{} to {}".format(project, dataset_id, table_id, destination_uri)
         )
+
+    def test_simple_query(self):
+        res = lib310.db.fetch('SELECT * FROM `pfsdb3.system.info`')
+        print(res)
+    def test_create_table(self):
+        lib310.db.cache_query('SELECT * EXCEPT(treemap) FROM `pfsdb3.system.info`', 'salam')

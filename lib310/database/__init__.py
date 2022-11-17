@@ -1,3 +1,4 @@
+import time
 from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
@@ -8,7 +9,7 @@ db_info = 'system.info'
 def fetch(*args, **kwargs):
     global db_connection
     if db_connection is None:
-        db_connection = DatabaseConnection(**kwargs)
+        db_connection = DatabaseConnection()
 
     query_results = db_connection.query(*args, **kwargs)
     return query_results
@@ -17,9 +18,9 @@ def fetch(*args, **kwargs):
 def get_table_info(**kwargs):
     global db_connection
     if db_connection is None:
-        db_connection = DatabaseConnection(**kwargs)
+        db_connection = DatabaseConnection()
     elif db_connection.table_name != kwargs.get('table_name', db_connection.table_name):
-        db_connection = DatabaseConnection(**kwargs)
+        db_connection = DatabaseConnection()
 
     return db_connection.get_table_info()
 
@@ -27,14 +28,14 @@ def get_table_info(**kwargs):
 def list_datasets(**kwargs):
     global db_connection
     if db_connection is None:
-        db_connection = DatabaseConnection(**kwargs)
+        db_connection = DatabaseConnection()
     return list(db_connection.client.list_datasets())
 
 
 def list_tables(**kwargs):
     global db_connection
     if db_connection is None:
-        db_connection = DatabaseConnection(**kwargs)
+        db_connection = DatabaseConnection()
 
     dataset_ids = kwargs.get('dataset_ids')
 
@@ -53,7 +54,7 @@ def list_tables(**kwargs):
 
 def summary(**kwargs):
     global db_connection
-    db_connector(**kwargs)
+    db_connector()
     client = db_connection.client
     df = client.query(f"SELECT dataset_name, table_name, num_rows, num_cols, size FROM `{db_info}`").to_dataframe()
 
@@ -67,7 +68,7 @@ def summary(**kwargs):
 def visualize(**kwargs):
     name = kwargs.get('dataset')
     global db_connection
-    db_connector(**kwargs)
+    db_connector()
     client = db_connection.client
     if name is None:
         df = client.query(f"""
@@ -84,8 +85,21 @@ def visualize(**kwargs):
     visualize_dataset(tables, name)
 
 
-def db_connector(**kwargs):
+def db_connector():
     global db_connection
     if db_connection is None:
-        db_connection = DatabaseConnection(**kwargs)
+        db_connection = DatabaseConnection()
     return db_connection
+
+
+def cache_query(query, name):
+    db = db_connector()
+    table = db.client.build_temp_table()
+    print(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
+    time.sleep(10)
+
+    db.client.query_to_cached_dataset(query=query, destination=table)
+    print(f'Insert query {query} to {table.table_id}')
+
+    db.client.delete_table(table)
+    print(f'Deleted table {table.table_id} from {db.client.CACHE_DATASET}')
