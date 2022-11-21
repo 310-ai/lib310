@@ -16,8 +16,9 @@ class GCSDataset(Dataset):
         credentials, project = google.auth.default(scopes=storage_client.SCOPE)
         fs = gcsfs.GCSFileSystem(project=project, token=credentials)
         fs.credentials.maybe_refresh()
-        self.ddf = dd.read_csv('gs://bigquery_1/lang_4/tokens/tokens_000000000000', storage_options={'token': fs.credentials.token})
+        self.ddf = dd.read_csv(file_uri, storage_options={'token': fs.credentials.token})
         self.target_name = target_col_name
+        self.file_uri = file_uri
 
     def __len__(self):
         return self.ddf.index.pipe(len)
