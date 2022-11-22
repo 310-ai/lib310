@@ -7,7 +7,7 @@ import dask.dataframe as dd
 
 
 class GCSDataset(Dataset):
-    def __int__(self, file_uri, target_col_name):
+    def __init__(self, file_uri, target_col_name):
         """
         :param file_uri: the uri of file even with wildcards in gcs
         :return:

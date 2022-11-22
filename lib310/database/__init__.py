@@ -3,6 +3,7 @@ from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
 from datetime import datetime, timedelta
+from .gcs_dataset import GCSDataset
 import logging
 
 db_connection: DatabaseConnection = None
@@ -10,6 +11,7 @@ __db_info = 'system.info'
 __db_gcs_cache = 'system.gcs_cache'
 
 log = logging.getLogger("lib310")
+
 
 def fetch(*args, **kwargs):
     global db_connection
