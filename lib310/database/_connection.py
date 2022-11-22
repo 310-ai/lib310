@@ -6,7 +6,7 @@ def set_gcloud_key_path(path: str):
 
 
 class DatabaseConnection(object):
-    def __init__(self, **kwargs):
+    def __init__(self):
         from .client import Client  # This import is here for lazy load
 
         if "GOOGLE_APPLICATION_CREDENTIALS" not in os.environ.keys():
@@ -14,14 +14,14 @@ class DatabaseConnection(object):
                 'You must set BigQuery credentials first! try using `lib310.db.set_gcloud_key_path(path) method.`')
 
         self.client = Client()
-        self.table_name = kwargs.get('table_name', 'pfsdb3.0_uniprot.uniref')
-        self.table = self.client.get_table(self.table_name) if self.table_name else None
-        self.table_schema = {schema.name: {'type': schema.field_type, } for schema in
-                             self.table.schema} if self.table else {}
-        self.verbose = kwargs.pop('verbose', False)
-
-        if self.verbose:
-            print(f'Successfully established a connection with lib310 Database!')
+        # self.table_name = kwargs.get('table_name', 'pfsdb3.0_uniprot.uniref')
+        # self.table = self.client.get_table(self.table_name) if self.table_name else None
+        # self.table_schema = {schema.name: {'type': schema.field_type, } for schema in
+        #                      self.table.schema} if self.table else {}
+        # self.verbose = kwargs.pop('verbose', False)
+        #
+        # if self.verbose:
+        #     print(f'Successfully established a connection with lib310 Database!')
 
     def get_table_info(self):
         for column_name, column_info in self.table_schema.items():
