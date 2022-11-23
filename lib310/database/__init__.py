@@ -2,10 +2,11 @@ import time
 from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
+from ._constants import FileFormat
 from datetime import datetime, timedelta
 from .gcs_dataset import GCSDataset
 import logging
-from google.cloud import bigquery
+
 
 db_connection: DatabaseConnection = None
 __db_info = 'system.info'
@@ -100,7 +101,7 @@ def db_connector():
     return db_connection
 
 
-def cache_query(query, name, destination_format=bigquery.DestinationFormat.CSV):
+def cache_query(query, name, destination_format=FileFormat.CSV):
     db = db_connector()
     table = db.client.build_temp_table()
     log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
@@ -109,11 +110,13 @@ def cache_query(query, name, destination_format=bigquery.DestinationFormat.CSV):
     log.debug(f'Insert query {query} to {table.table_id}')
 
     destination_format = destination_format.upper()
-    if destination_format == 'JSON' or destination_format == 'JSONNL':
-        destination_format = bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
+    try:
+        destination_format = FileFormat.to_format(destination_format)
+    except KeyError:
+        raise TypeError('The destination format is not supported')
 
     res = db.client.export_to_gcs(table, name, destination_format)
-    log.debug(f'Export {table.table_id} to GCS(/{table.table_id}/{name}_*.csv)')
+    log.debug(f'Export {table.table_id} to GCS(/{table.table_id}/{name}_*.{destination_format})')
 
     try:
         info = db.client.insert_rows_json(__db_gcs_cache, [{

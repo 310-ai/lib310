@@ -4,10 +4,11 @@ import google.auth
 import gcsfs
 from torch.utils.data import Dataset
 import dask.dataframe as dd
+from ._constants import FileFormat
 
 
 class GCSDataset(Dataset):
-    def __init__(self, file_uri, target_col_name):
+    def __init__(self, file_uri, target_col_name, file_format=FileFormat.CSV):
         """
         :param file_uri: the uri of file even with wildcards in gcs
         :return:
@@ -16,7 +17,15 @@ class GCSDataset(Dataset):
         credentials, project = google.auth.default(scopes=storage_client.SCOPE)
         fs = gcsfs.GCSFileSystem(project=project, token=credentials)
         fs.credentials.maybe_refresh()
-        self.ddf = dd.read_csv(file_uri, storage_options={'token': fs.credentials.token})
+        file_format = FileFormat.to_format(file_format)
+        if file_format == FileFormat.CSV:
+            self.ddf = dd.read_csv(file_uri, storage_options={'token': fs.credentials.token})
+        elif file_format == FileFormat.JSON:
+            self.ddf = dd.read_json(file_uri, storage_options={'token': fs.credentials.token})
+        elif file_format == FileFormat.PARQUET:
+            self.ddf = dd.read_parquet(file_uri, storage_options={'token': fs.credentials.token})
+        else:
+            raise TypeError('The file_format is not supported. supported("csv", "json", "parquet")')
         self.target_name = target_col_name
         self.file_uri = file_uri
 

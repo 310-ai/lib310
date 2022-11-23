@@ -4,6 +4,7 @@ from google.cloud.bigquery import enums
 from google.api_core.exceptions import AlreadyExists, Conflict
 
 from . import exceptions
+from ._constants import FileFormat
 from datetime import datetime
 from . import _functions as fn
 
@@ -12,6 +13,7 @@ class Client(bigquery.Client):
     PROJECT = 'pfsdb3'
     CACHE_DATASET = 'cached'
     BUCKET_NAME = 'bigquery_1'
+
     def __init__(self):
         super(Client, self).__init__()
 
@@ -60,18 +62,18 @@ class Client(bigquery.Client):
         query_result = self.query(query, job_config=config, api_method=enums.QueryApiMethod.INSERT)
         return query_result.result()
 
-    def export_to_gcs(self, table, name, destination_format=bigquery.DestinationFormat.CSV):
-        extensions = {
-            bigquery.DestinationFormat.CSV: 'csv',
-            bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON: 'json',
-            bigquery.DestinationFormat.AVRO: 'avro',
-            bigquery.DestinationFormat.PARQUET: 'parquet'
-        }
-        destination_uri = f"gs://{self.BUCKET_NAME}/{table.table_id}/{name}_*.{extensions[destination_format]}"
+    def export_to_gcs(self, table, name, destination_format=FileFormat.CSV):
+        try:
+            destination_uri = f"gs://{self.BUCKET_NAME}/{table.table_id}/{name}_*.{FileFormat.to_extension(destination_format)}"
+        except KeyError:
+            destination_uri = f"gs://{self.BUCKET_NAME}/{table.table_id}/{name}_*"
         dataset_ref = bigquery.DatasetReference(self.PROJECT, self.CACHE_DATASET)
         table_ref = dataset_ref.table(table.table_id)
-        job_config = bigquery.job.ExtractJobConfig()
-        job_config.destination_format = destination_format
+        try:
+            job_config = bigquery.job.ExtractJobConfig()
+            job_config.destination_format = FileFormat.to_format(destination_format)
+        except KeyError:
+            raise TypeError('The destination format is not supported')
         extract_job = self.extract_table(
             table_ref,
             destination_uri,
