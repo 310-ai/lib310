@@ -37,8 +37,11 @@ class TestBqGcs(unittest.TestCase):
         res = lib310.db.fetch('SELECT * FROM `pfsdb3.system.info`')
         print(res)
 
-    def test_create_table(self):
-        lib310.db.cache_query('SELECT * EXCEPT(treemap) FROM `pfsdb3.system.info`', 'salam')
+    def test_cache_query_csv(self):
+        lib310.db.cache_query('SELECT * EXCEPT(treemap) FROM `pfsdb3.system.info`', 'mycsv')
+
+    def test_cache_query_json(self):
+        lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json')
 
     def test_read_from_gcs(self):
         ddf = lib310.db.GCSDataset('gs://bigquery_1/lang_4/tokens/tokens_000000000000', 'num')

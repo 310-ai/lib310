@@ -60,13 +60,22 @@ class Client(bigquery.Client):
         query_result = self.query(query, job_config=config, api_method=enums.QueryApiMethod.INSERT)
         return query_result.result()
 
-    def export_to_gcs(self, table, name):
-        destination_uri = f"gs://{self.BUCKET_NAME}/{table.table_id}/{name}_*.csv"
+    def export_to_gcs(self, table, name, destination_format=bigquery.DestinationFormat.CSV):
+        extensions = {
+            bigquery.DestinationFormat.CSV: 'csv',
+            bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON: 'json',
+            bigquery.DestinationFormat.AVRO: 'avro',
+            bigquery.DestinationFormat.PARQUET: 'parquet'
+        }
+        destination_uri = f"gs://{self.BUCKET_NAME}/{table.table_id}/{name}_*.{extensions[destination_format]}"
         dataset_ref = bigquery.DatasetReference(self.PROJECT, self.CACHE_DATASET)
         table_ref = dataset_ref.table(table.table_id)
+        job_config = bigquery.job.ExtractJobConfig()
+        job_config.destination_format = destination_format
         extract_job = self.extract_table(
             table_ref,
             destination_uri,
+            job_config=job_config
             # Location must match that of the source table.
             # location="US",
         )  # API request

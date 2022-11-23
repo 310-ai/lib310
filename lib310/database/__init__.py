@@ -5,6 +5,7 @@ from ._visualize import *
 from datetime import datetime, timedelta
 from .gcs_dataset import GCSDataset
 import logging
+from google.cloud import bigquery
 
 db_connection: DatabaseConnection = None
 __db_info = 'system.info'
@@ -99,7 +100,7 @@ def db_connector():
     return db_connection
 
 
-def cache_query(query, name):
+def cache_query(query, name, destination_format=bigquery.DestinationFormat.CSV):
     db = db_connector()
     table = db.client.build_temp_table()
     log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
@@ -107,7 +108,11 @@ def cache_query(query, name):
     db.client.query_to_cached_dataset(query=query, destination=table)
     log.debug(f'Insert query {query} to {table.table_id}')
 
-    res = db.client.export_to_gcs(table, name)
+    destination_format = destination_format.upper()
+    if destination_format == 'JSON' or destination_format == 'JSONNL':
+        destination_format = bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
+
+    res = db.client.export_to_gcs(table, name, destination_format)
     log.debug(f'Export {table.table_id} to GCS(/{table.table_id}/{name}_*.csv)')
 
     try:
