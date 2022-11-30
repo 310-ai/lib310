@@ -114,7 +114,7 @@ def cache_query(query, name, destination_format=FileFormat.CSV, days=7, ignore_h
             cached = cached.where(cached['hash'] == hashed_query).dropna().sort_values(by=['created_at'],
                                                                                        ascending=False)
             if len(cached) > 0:
-                row = cached.iloc[0]
+                row = cached.iloc[0].to_dict()
     if row is not None:
         # hit happened
         row['hit'] = True
