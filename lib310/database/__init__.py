@@ -101,7 +101,7 @@ def db_connector():
     return db_connection
 
 
-def cache_query(query, name, destination_format=FileFormat.CSV):
+def cache_query(query, name, destination_format=FileFormat.CSV, days=7, override=False):
     db = db_connector()
     table = db.client.build_temp_table()
     log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
@@ -125,7 +125,9 @@ def cache_query(query, name, destination_format=FileFormat.CSV):
             'uri': res.destination_uris[0],
             'length': res.destination_uri_file_counts[0],
             'created_at': datetime.now().isoformat(),
-            'expired_at': (datetime.now() + timedelta(days=7)).isoformat()
+            'query': query,
+            'hash': hash(query),
+            'expired_at': (datetime.now() + timedelta(days=days)).isoformat()
         }])
         if len(info) > 0 and len(info[0]['errors']) != 0:
             log.error(info[0]['errors'])
