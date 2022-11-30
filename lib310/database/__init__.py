@@ -117,6 +117,7 @@ def cache_query(query, name, destination_format=FileFormat.CSV, days=7, ignore_h
                 row = cached.iloc[0]
     if row is not None:
         # hit happened
+        row['hit'] = True
         return row
 
     table = db.client.build_temp_table()
@@ -155,4 +156,5 @@ def cache_query(query, name, destination_format=FileFormat.CSV, days=7, ignore_h
     db.client.delete_table(table)
     log.debug(f'Deleted table {table.table_id} from {db.client.CACHE_DATASET}')
 
+    row['hit'] = False
     return row
