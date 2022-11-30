@@ -38,14 +38,12 @@ class TestBqGcs(unittest.TestCase):
         print(res)
 
     def test_cache_query_csv(self):
-        dst, n = lib310.db.cache_query('SELECT * EXCEPT(treemap) FROM `pfsdb3.system.info`', 'mycsv')
-        print(dst)
-        print(n)
+        row = lib310.db.cache_query('SELECT * EXCEPT(treemap) FROM `pfsdb3.system.info`', 'mycsv')
+        print(row)
 
     def test_cache_query_json(self):
-        dst, n = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json')
-        print(dst)
-        print(n)
+        row = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json')
+        print(row)
 
     def test_read_from_gcs(self):
         ddf = lib310.db.GCSDataset('gs://bigquery_1/lang_4/tokens/tokens_000000000000', 'num')

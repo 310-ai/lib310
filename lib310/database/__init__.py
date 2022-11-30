@@ -1,11 +1,10 @@
-import time
-from typing import Optional
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
 from ._constants import FileFormat
 from datetime import datetime, timedelta
 from .gcs_dataset import GCSDataset
 import logging
+import hashlib
 
 
 db_connection: DatabaseConnection = None
@@ -101,8 +100,25 @@ def db_connector():
     return db_connection
 
 
-def cache_query(query, name, destination_format=FileFormat.CSV, days=7, override=False):
+def cache_query(query, name, destination_format=FileFormat.CSV, days=7, ignore_hit=False):
+    hashed_query = hashlib.sha1(query.encode('utf-8')).hexdigest()
+    if days <= 0:
+        days = 7
     db = db_connector()
+
+    # check for the hit
+    row = None
+    if not ignore_hit:
+        cached = db.client.query('SELECT * from `system.gcs_cache` WHERE status_code != -1').to_dataframe()
+        if len(cached) > 0:
+            cached = cached.where(cached['hash'] == hashed_query).dropna().sort_values(by=['created_at'],
+                                                                                       ascending=False)
+            if len(cached) > 0:
+                row = cached.iloc[0]
+    if row is not None:
+        # hit happened
+        return row
+
     table = db.client.build_temp_table()
     log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
 
@@ -119,23 +135,24 @@ def cache_query(query, name, destination_format=FileFormat.CSV, days=7, override
     log.debug(f'Export {table.table_id} to GCS(/{table.table_id}/{name}_*.{destination_format})')
 
     try:
-        info = db.client.insert_rows_json(__db_gcs_cache, [{
+        row = {
             'name': name,
             'folder': table.table_id,
             'uri': res.destination_uris[0],
             'length': res.destination_uri_file_counts[0],
             'created_at': datetime.now().isoformat(),
+            'expired_at': (datetime.now() + timedelta(days=days)).isoformat(),
             'query': query,
-            'hash': hash(query),
-            'expired_at': (datetime.now() + timedelta(days=days)).isoformat()
-        }])
+            'hash': hashed_query,
+            'status_code': 1
+        }
+        info = db.client.insert_rows_json(__db_gcs_cache, [row])
         if len(info) > 0 and len(info[0]['errors']) != 0:
             log.error(info[0]['errors'])
     except Exception as e:
         log.error(e)
 
-
     db.client.delete_table(table)
     log.debug(f'Deleted table {table.table_id} from {db.client.CACHE_DATASET}')
 
-    return res.destination_uris, res.destination_uri_file_counts
+    return row
