@@ -1,9 +1,9 @@
 from ._connection import DatabaseConnection, set_gcloud_key_path
 from ._visualize import *
-from ._constants import FileFormat
+from ._constants import FileFormat, CacheResponseType
 from datetime import datetime, timedelta
 from .gcs_dataset import GCSDataset
-import logging
+import logging as log
 import hashlib
 
 
@@ -11,9 +11,8 @@ db_connection: DatabaseConnection = None
 __db_info = 'system.info'
 __db_gcs_cache = 'system.gcs_cache'
 
-log = logging.getLogger("lib310")
-
-
+__all__ = ['fetch', 'get_table_info', 'list_datasets', 'list_tables', 'summary', 'visualize', 'db_connector',
+           'CacheResponseType']
 def fetch(*args, **kwargs):
     global db_connection
     if db_connection is None:
@@ -100,7 +99,28 @@ def db_connector():
     return db_connection
 
 
-def cache_query(query, name, destination_format=FileFormat.CSV, days=7, ignore_hit=False):
+def cache_query(query,
+                name: str = None,
+                destination_format: str or FileFormat = FileFormat.CSV,
+                days: int = 7,
+                ignore_hit: bool = False,
+                response_type: CacheResponseType.CACHE_INFO = CacheResponseType, target_column=''):
+    """
+    Cache a query result in Google Cloud Storage (GCS)
+    :param query: query to run on bigquery and cache in GCS
+    :param name: name of the file to store in GCS
+    :param destination_format: format of the file to store in GCS
+    :param days: days to keep the file in GCS
+    :param ignore_hit: ignore cache hit and run the query again
+    :param response_type: return response as cache info or as a dataset
+    :param target_column: target column to use for the dataset
+    :return: cache info or dataset
+    """
+    if response_type == CacheResponseType.DATASET and FileFormat.to_format(destination_format) == FileFormat.AVRO:
+        raise ValueError("Cannot return dataset for AVRO format")
+    if str is None:
+        name = get_random_string(10)
+
     hashed_query = hashlib.sha1(query.encode('utf-8')).hexdigest()
     if days <= 0:
         days = 7
@@ -157,4 +177,8 @@ def cache_query(query, name, destination_format=FileFormat.CSV, days=7, ignore_h
     log.debug(f'Deleted table {table.table_id} from {db.client.CACHE_DATASET}')
 
     row['hit'] = False
-    return row
+
+    if response_type == CacheResponseType.CACHE_INFO:
+        return row
+    return GCSDataset(row['uri'], target_col_name=target_column, file_format=FileFormat.to_format(destination_format))
+

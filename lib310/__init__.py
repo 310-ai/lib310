@@ -34,3 +34,4 @@ b10_logger.propagate = False
 __all__ = [
     'db', 'data', 'ml', 'tools', 'plot',
 ]
+__author__ = '310.ai team ("Saman Fekri <saman@310.ai>",Mohsen Naghipourfar <naghipourfar@berkeley.edu>", "Ismail Naderi <inaderi@310.ai>)'

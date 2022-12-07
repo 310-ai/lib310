@@ -33,3 +33,6 @@ class FileFormat(object):
         return formats[value]
 
 
+class CacheResponseType(object):
+    CACHE_INFO = 'cache_info'
+    DATASET = 'dataset'

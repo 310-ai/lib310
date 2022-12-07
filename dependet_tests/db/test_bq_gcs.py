@@ -54,3 +54,7 @@ class TestBqGcs(unittest.TestCase):
         ddf = lib310.db.GCSDataset('gs://bigquery_1/QJZDCWPD/myjson_*.json', 'num', 'json')
         print(len(ddf))
 
+    def test_direct_dataset(self):
+        ddf = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json', response_type=lib310.db.CacheResponseType.CACHE_INFO)
+        print(len(ddf))
+
