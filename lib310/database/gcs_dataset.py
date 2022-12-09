@@ -33,6 +33,7 @@ class GCSDataset(Dataset):
         return self.ddf.index.pipe(len)
 
     def __getitem__(self, idx):
+        print(idx)
         parts = self.ddf.map_partitions(len).compute()
         n = 0
         division_start = 0
@@ -44,5 +45,7 @@ class GCSDataset(Dataset):
         part_idx = idx - division_start
         df = self.ddf.get_partition(n).compute()
         item = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns != self.target_name])]
-        target = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns == self.target_name])]
-        return item, target
+        if self.target_name is not None and self.target_name != '' and self.target_name in df.columns:
+            target = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns == self.target_name])]
+            return dict(item), dict(target)
+        return dict(item)

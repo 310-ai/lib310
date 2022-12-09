@@ -1,11 +1,17 @@
 import unittest
 import dotenv
 import lib310
+from torch.utils.data import DataLoader
+from lib310.database import FileFormat, CacheResponseType
+from torch.utils.data import DataLoader
 
 
 from google.cloud import bigquery
 
 
+def salam(data):
+    print(data)
+    return data
 class TestBqGcs(unittest.TestCase):
 
     def setUp(self):
@@ -55,6 +61,32 @@ class TestBqGcs(unittest.TestCase):
         print(len(ddf))
 
     def test_direct_dataset(self):
-        ddf = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json', response_type=lib310.db.CacheResponseType.CACHE_INFO)
+        ddf = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json', response_type=lib310.db.CacheResponseType.DATASET)
         print(len(ddf))
+
+    def test_simple_dataloader(self):
+        row = lib310.db.cache_query('SELECT * EXCEPT(treemap) FROM `pfsdb3.system.info`', 'mycsv')
+        print(row['uri'])
+        ddf = lib310.db.GCSDataset(row['uri'], 'size')
+        data = DataLoader(ddf, batch_size=2, shuffle=False)
+        for batch in data:
+            print(batch)
+
+    def test_icm_creating(self):
+        ds = lib310.db.cache_query(
+            query='''
+               SELECT parc.Entry, terms.go_ids
+               FROM `1_go.sequence_term_expanded` terms
+               JOIN `0_uniprot.uniparc` parc
+               ON terms.sequence = parc.Sequence
+           ''',
+            name='ICR',
+            destination_format=FileFormat.JSON,
+            response_type=CacheResponseType.DATASET,
+        )
+        print(ds)
+        data = DataLoader(ds, batch_size=16, shuffle=False)
+        for batch in data:
+            print(batch)
+
 

@@ -104,7 +104,7 @@ def cache_query(query,
                 destination_format: str or FileFormat = FileFormat.CSV,
                 days: int = 7,
                 ignore_hit: bool = False,
-                response_type: CacheResponseType.CACHE_INFO = CacheResponseType, target_column=''):
+                response_type: CacheResponseType = CacheResponseType.CACHE_INFO, target_column=''):
     """
     Cache a query result in Google Cloud Storage (GCS)
     :param query: query to run on bigquery and cache in GCS
@@ -138,7 +138,11 @@ def cache_query(query,
     if row is not None:
         # hit happened
         row['hit'] = True
-        return row
+        if response_type == CacheResponseType.CACHE_INFO:
+            return row
+        return GCSDataset(row['uri'], target_col_name=target_column,
+                          file_format=FileFormat.to_format(destination_format))
+
 
     table = db.client.build_temp_table()
     log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
