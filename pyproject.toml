@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lib310"
-version = "0.2.8"
+version = "0.2.9"
 description = "lib310 Python Package"
 authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>", "Saman Fekri <saman@310.ai>", "Ismail Naderi <inaderi@310.ai>"]
 
@@ -19,6 +19,8 @@ matplotlib = ">=3.5.2"
 plotly = ">=5.4.0"
 graphviz = ">=0.11"
 dask = ">=2022.11.0"
+distributed = ">=2022.11.0"
+dask-sql = ">=2022.11.0"
 gcsfs = ">=2022.11.0"
 
 

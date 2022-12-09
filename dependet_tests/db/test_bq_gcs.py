@@ -1,7 +1,6 @@
 import unittest
 import dotenv
 import lib310
-from torch.utils.data import DataLoader
 from lib310.database import FileFormat, CacheResponseType
 from torch.utils.data import DataLoader
 
@@ -72,8 +71,16 @@ class TestBqGcs(unittest.TestCase):
         for batch in data:
             print(batch)
 
+    def test_simple_dataloader_2(self):
+        row = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json')
+        print(row)
+        ddf = lib310.db.GCSDataset(row['uri'], '', file_format=FileFormat.JSON)
+        data = DataLoader(ddf, batch_size=100, shuffle=False)
+        for batch in data:
+            print(batch)
+
     def test_icm_creating(self):
-        ds = lib310.db.cache_query(
+        row = lib310.db.cache_query(
             query='''
                SELECT parc.Entry, terms.go_ids
                FROM `1_go.sequence_term_expanded` terms
@@ -82,11 +89,32 @@ class TestBqGcs(unittest.TestCase):
            ''',
             name='ICR',
             destination_format=FileFormat.JSON,
-            response_type=CacheResponseType.DATASET,
         )
+        print(row)
+        # print(row['uri'])
+        ds = lib310.db.GCSDataset(row['uri'], '', file_format=FileFormat.JSON, size=row['total_rows'])
         print(ds)
-        data = DataLoader(ds, batch_size=16, shuffle=False)
-        for batch in data:
+        data_loader = DataLoader(ds, batch_size=100, shuffle=False, collate_fn=lambda x: x)
+        print(data_loader)
+        for batch in data_loader:
+            print(batch)
+
+    def test_icm_creating_direct(self):
+        ds = lib310.db.cache_query(
+            query='''
+               SELECT parc.Entry, terms.go_ids
+               FROM `1_go.sequence_term_expanded` terms
+               JOIN `0_uniprot.uniparc` parc
+               ON terms.sequence = parc.Sequence
+               LIMIT 100
+           ''',
+            name='ICR',
+            destination_format=FileFormat.JSON,
+            response_type=CacheResponseType.DATASET
+        )
+        data_loader = DataLoader(ds, batch_size=7, shuffle=False, collate_fn=lambda x: x)
+        print(data_loader)
+        for batch in data_loader:
             print(batch)
 
 

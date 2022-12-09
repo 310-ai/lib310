@@ -1,18 +1,25 @@
-import torch
 from google.cloud import storage
 import google.auth
 import gcsfs
 from torch.utils.data import Dataset
 import dask.dataframe as dd
 from ._constants import FileFormat
+from distributed import Client, LocalCluster
+import torch
+
 
 
 class GCSDataset(Dataset):
-    def __init__(self, file_uri, target_col_name, file_format=FileFormat.CSV):
+    def __init__(self, file_uri, target_col_name, file_format=FileFormat.CSV, size=-1):
         """
         :param file_uri: the uri of file even with wildcards in gcs
         :return:
         """
+        if not size:
+            size = -1
+
+        cluster = LocalCluster()
+        client = Client(cluster)
         storage_client = storage.Client()
         credentials, project = google.auth.default(scopes=storage_client.SCOPE)
         fs = gcsfs.GCSFileSystem(project=project, token=credentials)
@@ -29,23 +36,63 @@ class GCSDataset(Dataset):
         self.target_name = target_col_name
         self.file_uri = file_uri
 
+        if size < 0:
+            self.n = 0
+            self.parts = []
+            for i in range(self.ddf.npartitions):
+                df = self.ddf.get_partition(i).compute()
+                self.n = self.n + len(df)
+                self.parts.append({
+                    'fetched': True,
+                    'start': self.n - len(df),
+                    'end': self.n - 1
+                })
+            self.last_partition_loaded = self.ddf.get_partition(0).compute()
+            self.last_partition_loaded_index = 0
+        else:
+            self.last_partition_loaded = self.ddf.get_partition(0).compute()
+            self.last_partition_loaded_index = 0
+            first_partition_size = len(self.last_partition_loaded)
+            self.n = size
+            self.parts = [
+                {
+                    'fetched': (i == 0),
+                    'start': (i * first_partition_size),
+                    'end': min(size, ((i + 1) * first_partition_size) - 1)
+                } for i in range(self.ddf.npartitions)]
+
     def __len__(self):
-        return self.ddf.index.pipe(len)
+        return self.n
 
     def __getitem__(self, idx):
-        print(idx)
-        parts = self.ddf.map_partitions(len).compute()
-        n = 0
-        division_start = 0
-        for part in parts:
-            if idx < division_start + part:
-                break
-            n += 1
-            division_start += part
-        part_idx = idx - division_start
-        df = self.ddf.get_partition(n).compute()
+        _, part_idx, df = self.find_correct_dask_partition(idx)
         item = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns != self.target_name])]
         if self.target_name is not None and self.target_name != '' and self.target_name in df.columns:
             target = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns == self.target_name])]
+            target = target.to_list()
             return dict(item), dict(target)
         return dict(item)
+
+    def find_correct_dask_partition(self, idx):
+        for i, part in enumerate(self.parts):
+            if not part['fetched']:
+                prv = self.parts[i - 1]
+                if self.last_partition_loaded_index != i:
+                    self.last_partition_loaded = self.ddf.get_partition(i).compute()
+                    self.last_partition_loaded_index = i
+                tmp = {
+                    'fetched': True,
+                    'start': prv['end'] + 1,
+                    'end': prv['end'] + len(self.last_partition_loaded)
+                }
+                self.parts[i] = tmp
+
+            if part['start'] <= idx <= part['end']:
+                if self.last_partition_loaded_index != i:
+                    self.last_partition_loaded = self.ddf.get_partition(i).compute()
+                    self.last_partition_loaded_index = i
+                part_idx = idx - part['start']
+                return self.last_partition_loaded_index, part_idx, self.last_partition_loaded
+
+        part_idx = idx - self.parts[-1]['start']
+        return self.last_partition_loaded_index, part_idx, self.last_partition_loaded

@@ -11,8 +11,7 @@ db_connection: DatabaseConnection = None
 __db_info = 'system.info'
 __db_gcs_cache = 'system.gcs_cache'
 
-__all__ = ['fetch', 'get_table_info', 'list_datasets', 'list_tables', 'summary', 'visualize', 'db_connector',
-           'CacheResponseType']
+__all__ = ['fetch', 'get_table_info', 'list_datasets', 'list_tables', 'summary', 'visualize', 'CacheResponseType']
 def fetch(*args, **kwargs):
     global db_connection
     if db_connection is None:
@@ -116,6 +115,7 @@ def cache_query(query,
     :param target_column: target column to use for the dataset
     :return: cache info or dataset
     """
+
     if response_type == CacheResponseType.DATASET and FileFormat.to_format(destination_format) == FileFormat.AVRO:
         raise ValueError("Cannot return dataset for AVRO format")
     if str is None:
@@ -141,13 +141,13 @@ def cache_query(query,
         if response_type == CacheResponseType.CACHE_INFO:
             return row
         return GCSDataset(row['uri'], target_col_name=target_column,
-                          file_format=FileFormat.to_format(destination_format))
+                          file_format=FileFormat.to_format(destination_format), size=row['total_rows'])
 
 
     table = db.client.build_temp_table()
     log.debug(f'Created table {table.table_id} in {db.client.CACHE_DATASET}')
 
-    db.client.query_to_cached_dataset(query=query, destination=table)
+    qresult = db.client.query_to_cached_dataset(query=query, destination=table)
     log.debug(f'Insert query {query} to {table.table_id}')
 
     destination_format = destination_format.upper()
@@ -169,6 +169,7 @@ def cache_query(query,
             'expired_at': (datetime.now() + timedelta(days=days)).isoformat(),
             'query': query,
             'hash': hashed_query,
+            'total_rows': qresult.total_rows,
             'status_code': 1
         }
         info = db.client.insert_rows_json(__db_gcs_cache, [row])
@@ -184,5 +185,5 @@ def cache_query(query,
 
     if response_type == CacheResponseType.CACHE_INFO:
         return row
-    return GCSDataset(row['uri'], target_col_name=target_column, file_format=FileFormat.to_format(destination_format))
+    return GCSDataset(row['uri'], target_col_name=target_column, file_format=FileFormat.to_format(destination_format), size=row['total_rows'])
 
