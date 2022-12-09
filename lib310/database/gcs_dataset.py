@@ -4,8 +4,6 @@ import gcsfs
 from torch.utils.data import Dataset
 import dask.dataframe as dd
 from ._constants import FileFormat
-from distributed import Client, LocalCluster
-import torch
 
 
 
@@ -17,9 +15,6 @@ class GCSDataset(Dataset):
         """
         if not size:
             size = -1
-
-        cluster = LocalCluster()
-        client = Client(cluster)
         storage_client = storage.Client()
         credentials, project = google.auth.default(scopes=storage_client.SCOPE)
         fs = gcsfs.GCSFileSystem(project=project, token=credentials)
