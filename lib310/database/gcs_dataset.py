@@ -60,13 +60,20 @@ class GCSDataset(Dataset):
         return self.n
 
     def __getitem__(self, idx):
-        _, part_idx, df = self.find_correct_dask_partition(idx)
-        item = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns != self.target_name])]
-        if self.target_name is not None and self.target_name != '' and self.target_name in df.columns:
-            target = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns == self.target_name])]
-            target = target.to_list()
-            return dict(item), dict(target)
-        return dict(item)
+        try:
+            _, part_idx, df = self.find_correct_dask_partition(idx)
+            if part_idx >= len(df):
+                print('idx: ', idx)
+                return None
+            item = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns != self.target_name])]
+            if self.target_name is not None and self.target_name != '' and self.target_name in df.columns:
+                target = df.iloc[part_idx, df.columns.get_indexer(df.columns[df.columns == self.target_name])]
+                target = target.to_list()
+                return dict(item), dict(target)
+            return dict(item)
+        except Exception as e:
+            print(e)
+            return None
 
     def find_correct_dask_partition(self, idx):
         for i, part in enumerate(self.parts):
