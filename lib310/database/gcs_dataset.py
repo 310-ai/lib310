@@ -4,6 +4,7 @@ import gcsfs
 from torch.utils.data import Dataset
 import dask.dataframe as dd
 from ._constants import FileFormat
+import threading
 
 
 
@@ -30,12 +31,14 @@ class GCSDataset(Dataset):
             raise TypeError('The file_format is not supported. supported("csv", "json", "parquet")')
         self.target_name = target_col_name
         self.file_uri = file_uri
+        self.lock = threading.Lock()
+
 
         if size < 0:
             self.n = 0
             self.parts = []
             for i in range(self.ddf.npartitions):
-                df = self.ddf.get_partition(i).compute()
+                df = self.ddf.partitions[i].compute()
                 self.n = self.n + len(df)
                 self.parts.append({
                     'fetched': True,
@@ -76,11 +79,12 @@ class GCSDataset(Dataset):
             return None
 
     def find_correct_dask_partition(self, idx):
+        self.lock.acquire()
         for i, part in enumerate(self.parts):
             if not part['fetched']:
                 prv = self.parts[i - 1]
                 if self.last_partition_loaded_index != i:
-                    self.last_partition_loaded = self.ddf.get_partition(i).compute()
+                    self.last_partition_loaded = self.ddf.partitions[i].compute()
                     self.last_partition_loaded_index = i
                 tmp = {
                     'fetched': True,
@@ -91,10 +95,12 @@ class GCSDataset(Dataset):
 
             if part['start'] <= idx <= part['end']:
                 if self.last_partition_loaded_index != i:
-                    self.last_partition_loaded = self.ddf.get_partition(i).compute()
+                    self.last_partition_loaded = self.ddf.partitions[i].compute()
                     self.last_partition_loaded_index = i
                 part_idx = idx - part['start']
+                self.lock.release()
                 return self.last_partition_loaded_index, part_idx, self.last_partition_loaded
 
         part_idx = idx - self.parts[-1]['start']
+        self.lock.release()
         return self.last_partition_loaded_index, part_idx, self.last_partition_loaded
