@@ -95,12 +95,21 @@ class GCSDataset(Dataset):
 
             if part['start'] <= idx <= part['end']:
                 if self.last_partition_loaded_index != i:
-                    self.last_partition_loaded = self.ddf.partitions[i].compute()
-                    self.last_partition_loaded_index = i
+                    lp = self.ddf.partitions[i].compute()
+                    li = i
+                    self.last_partition_loaded = lp
+                    self.last_partition_loaded_index = li
+                else:
+                    li = self.last_partition_loaded_index
+                    lp = self.last_partition_loaded
                 part_idx = idx - part['start']
+                result = (li, part_idx, lp)
                 self.lock.release()
-                return self.last_partition_loaded_index, part_idx, self.last_partition_loaded
+                return result
 
         part_idx = idx - self.parts[-1]['start']
+        li = self.last_partition_loaded_index
+        lp = self.last_partition_loaded
+        result = (li, part_idx, lp)
         self.lock.release()
-        return self.last_partition_loaded_index, part_idx, self.last_partition_loaded
+        return result
