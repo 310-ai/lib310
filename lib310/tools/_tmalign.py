@@ -3,7 +3,7 @@ import subprocess
 
 
 
-def tm_allign( pdb_file_1,pdb_file_2):
+def tm_align( pdb_file_1,pdb_file_2):
     import os.path
     if (os.path.exists(r'TMalign')) == False:
         os.system('g++ -O3 -ffast-math -lm -o TMalign TMalign.cpp')
