@@ -43,9 +43,7 @@ class MLDL:
         
         hit = self.queue_key == f'{num}_{max_length}_{stage}'
         if hit:
-            print('HIT')
             return pd.DataFrame(self.queue.get())
-        print('MISS')
 
         if self.filler_thread is not None:
             self.kill_event.set()
