@@ -3,32 +3,38 @@ import pathlib
 import subprocess
 
 
-
-def tm_align( pdb_file_1,pdb_file_2):
-    import os.path
-    if (os.path.exists(r'TMalign')) == False:
-        os.system('g++ -O3 -ffast-math -lm -o TMalign TMalign.cpp')
-    batcmd = './TMalign {file1} {file2}'.format(file1=pdb_file_1, file2=pdb_file_2)
-    # result = subprocess.check_output(batcmd, shell=True)
-    result2 = subprocess.getoutput(batcmd)
-    # print("result::: ", result)
-    # result2[result2.find('TM-score    '):result2.find('TM-score    ') + 32]
-    return result2
-
-
-
-def tm_score( pdb_file_1,pdb_file_2):
+def tm_align(pdb_file_1, pdb_file_2):
     import os
     import subprocess
+    url = 'https://zhanggroup.org/TM-score/TMscore.cpp'
 
-    if (os.path.exists(r'TMscore')) == False:
-        print(subprocess.getoutput('g++ -O3 -ffast-math -lm -o TMscore {s}'.format(s='TMscore.cpp')))
-
-    batcmd = './TMscore {file1} {file2}'.format(file1="7ok9.pdb", file2="2gtl.pdb")
-
+    if (os.path.exists(r'TMalign')) == False:
+        import requests
+        r = requests.get(url, allow_redirects=True)
+        open('TMalign.cpp', 'wb').write(r.content)
+        print(subprocess.getoutput('g++ -O3 -ffast-math -lm -o TMalign {s}'.format(s='TMalign.cpp')))
+    out_name = '{} TO {}'.format(pdb_file_1[:4], pdb_file_2[:4])
+    batcmd = './TMalign {file1} {file2} -o TM.{out_name}.sup -m matrix{out_name}.txt'.format(file1=pdb_file_1,
+                                                                                             file2=pdb_file_2,
+                                                                                             out_name=out_name)
     result = subprocess.getoutput(batcmd)
     return result
 
 
 
+def tm_score( pdb_file_1,pdb_file_2,out_name):
+    import os
+    import subprocess
+    url = 'https://zhanggroup.org/TM-score/TMscore.cpp'
 
+    if (os.path.exists(r'TMalign')) == False:
+        import requests
+        r = requests.get(url, allow_redirects=True)
+        open('TMalign.cpp', 'wb').write(r.content)
+        print(subprocess.getoutput('g++ -O3 -ffast-math -lm -o TMalign {s}'.format(s='TMalign.cpp')))
+    out_name = '{} TO {}'.format(pdb_file_1[:4], pdb_file_2[:4])
+    batcmd = './TMalign {file1} {file2} '.format(file1=pdb_file_1,
+                                                                                             file2=pdb_file_2,
+                                                                                             out_name=out_name)
+    result = subprocess.getoutput(batcmd)
+    return result
