@@ -1,6 +1,8 @@
 import unittest
 import lib310
 import dotenv
+import os
+
 
 
 class TestDB(unittest.TestCase):
@@ -35,3 +37,10 @@ class TestDB(unittest.TestCase):
         # lib310.db.visualize()
         lib310.db.visualize(dataset='go')
         lib310.db.visualize(dataset='interpro')
+
+    def test_mldl(test):
+        from lib310.database import MLDL
+        mldl = MLDL(os.getenv('MONGO_URL'))
+        x = mldl.get_batch(100, 300, 'TRAIN')
+        mldl.terminate()
+        print(len(x))
