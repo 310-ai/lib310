@@ -5,13 +5,14 @@ from datetime import datetime, timedelta
 from .gcs_dataset import GCSDataset
 import logging as log
 import hashlib
+from .mldl import MLDL
 
 
 db_connection: DatabaseConnection = None
 __db_info = 'system.info'
 __db_gcs_cache = 'system.gcs_cache'
 
-__all__ = ['fetch', 'get_table_info', 'list_datasets', 'list_tables', 'summary', 'visualize', 'CacheResponseType']
+__all__ = ['fetch', 'get_table_info', 'list_datasets', 'list_tables', 'summary', 'visualize', 'CacheResponseType', 'MLDL']
 def fetch(*args, **kwargs):
     global db_connection
     if db_connection is None:

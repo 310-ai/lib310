@@ -22,7 +22,7 @@ dask = ">=2022.11.0"
 distributed = ">=2022.11.0"
 dask-sql = ">=2022.11.0"
 gcsfs = ">=2022.11.0"
-tmtools = "0.0.2"
+pymongo = ">=4.0.0"
 
 
 [tool.poetry.dev-dependencies]
