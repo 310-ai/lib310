@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lib310"
-version = "0.2.32"
+version = "0.2.33"
 description = "lib310 Python Package"
 authors = ["Mohsen Naghipourfar <naghipourfar@berkeley.edu>", "Saman Fekri <saman@310.ai>", "Ismail Naderi <inaderi@310.ai>"]
 
@@ -11,7 +11,7 @@ google-cloud-bigquery = ">=3.2.0"
 rich = ">=12.4.4"
 numpy = "<1.23.0"
 scanpy = ">=1.9.1"
-transformers = ">=4.20.1"
+#transformers = ">=4.20.1"
 torch = ">=1.12.0"
 pandas = ">=1.4.3"
 seaborn = ">=0.11.2"
@@ -22,6 +22,7 @@ dask = ">=2022.11.0"
 distributed = ">=2022.11.0"
 dask-sql = ">=2022.11.0"
 gcsfs = ">=2022.11.0"
+db-types = ">=1.0.0"
 pymongo = ">=4.0.0"
 
 

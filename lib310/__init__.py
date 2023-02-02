@@ -12,7 +12,7 @@ from .lazy_loader import LazyLoader
 # from . import visualization as plot
 db = LazyLoader('db', globals(), 'lib310.database')
 data = LazyLoader('data', globals(), 'lib310.data')
-ml = LazyLoader('ml', globals(), 'lib310.machinelearning')
+# ml = LazyLoader('ml', globals(), 'lib310.machinelearning')
 tools = LazyLoader('tools', globals(), 'lib310.tools')
 plot = LazyLoader('plot', globals(), 'lib310.visualization')
 
@@ -32,6 +32,6 @@ b10_logger = logging.getLogger("lib310")
 b10_logger.propagate = False
 
 __all__ = [
-    'db', 'data', 'ml', 'tools', 'plot',
+    'db', 'data', 'tools', 'plot',
 ]
 __author__ = '310.ai team ("Saman Fekri <saman@310.ai>",Mohsen Naghipourfar <naghipourfar@berkeley.edu>", "Ismail Naderi <inaderi@310.ai>)'
