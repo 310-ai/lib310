@@ -77,21 +77,20 @@ class MLDL:
 
         self.queue_key = f'{num}_{max_length}_{min_num_feature}_{stage}'
 
-        self.filler_thread = Thread(target=self.filler, args=(self.queue, num, self.sample_cache, col, self.kill_event))
+        self.filler_thread = Thread(target=self.filler, args=(num, col))
         self.filler_thread.start()
 
         index_list = random.sample(self.sample_cache, min(num, len(self.sample_cache)))
         cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 1, 'sequence': 1, 'token_ids': 1})
         return pd.DataFrame(list(cursor))
 
-    @staticmethod
-    def filler(queue, num, sample_cache, col, event):
+    def filler(self, num, col):
         while True:
-            index_list = random.sample(sample_cache, min(num, len(sample_cache)))
+            index_list = random.sample(self.sample_cache, min(num, len(self.sample_cache)))
             cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 1, 'sequence': 1, 'token_ids': 1})
             df = pd.DataFrame(list(cursor))
-            queue.put(df)
-            if event.is_set():
+            self.queue.put(df)
+            if self.kill_event.is_set():
                 break
 
     def background_sample_cache(self, max_length, num, min_num_feature, col):
@@ -100,7 +99,7 @@ class MLDL:
             c = col.find({'len': {'$lt': max_length + 1}, 'token_ids': {'$size': min_num_feature}},
                          {'row_id': 1, '_id': 0}).skip(10 * i * num).limit(10 * num)
             tmp = list(c)
-            self.sample_cache.append(list(map(lambda x: x['row_id'], tmp)))
+            self.sample_cache += list(map(lambda x: x['row_id'], tmp))
             i += 1
             if len(tmp) < 10 * num or self.kill_event_cache.is_set():
                 i = 0
