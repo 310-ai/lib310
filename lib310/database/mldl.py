@@ -97,7 +97,6 @@ class MLDL:
     def background_sample_cache(self, max_length, num, min_num_feature, col):
         i = 1
         while i > 0:
-            print(i)
             c = col.find({'len': {'$lt': max_length + 1}, 'token_ids': {'$size': min_num_feature}},
                          {'row_id': 1, '_id': 0}).skip(10 * i * num).limit(10 * num)
             tmp = list(c)
