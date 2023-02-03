@@ -60,7 +60,7 @@ class MLDL:
 
         if min_num_feature > 11:
             c = col.find({'len': {'$lt': max_length + 1}, 'token_ids': {'$size': min_num_feature}},
-                         {'row_id': 1, '_id': 0}).limit(10 * num)
+                         {'row_id': 1, '_id': 0}).sort("rand").limit(10 * num)
             self.sample_cache = list(map(lambda x: x['row_id'], list(c)))
             self.filler_thread_cache = Thread(target=self.background_sample_cache,
                                               args=(max_length, num, min_num_feature, col))
@@ -94,14 +94,14 @@ class MLDL:
                 break
 
     def background_sample_cache(self, max_length, num, min_num_feature, col):
-        i = 1
+        i = 10
         while i > 0:
             c = col.find({'len': {'$lt': max_length + 1}, 'token_ids': {'$size': min_num_feature}},
-                         {'row_id': 1, '_id': 0}).skip(10 * i * num).limit(10 * num)
+                         {'row_id': 1, '_id': 0}).sort("rand").skip(i * num).limit(num)
             tmp = list(c)
             self.sample_cache += list(map(lambda x: x['row_id'], tmp))
             i += 1
-            if len(tmp) < 10 * num or self.kill_event_cache.is_set():
+            if len(tmp) < num or self.kill_event_cache.is_set():
                 i = 0
                 break
 
