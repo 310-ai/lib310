@@ -13,6 +13,7 @@ class MLDL:
         self.col_train = self.db['seq_lang5_train']
         self.col_test = self.db['seq_lang5_test']
         self.cache = {'TRAIN': {}, 'TEST': {}}
+        self.sample_cache = []
         self.max_queue_size = cache_size
         self.queue_key = None
         self.queue = Queue(self.max_queue_size)
@@ -25,9 +26,8 @@ class MLDL:
         tmp = self.db['length_freq_lang5_test'].find().sort('len', ASCENDING)
         for item in tmp:
             self.cache['TEST'][item['len']] = {'freq': item['freq'], 'maxi': item['maxi'], 'mini': item['mini']}
-        
-    
-    def get_batch(self, num, max_length, stage):
+
+    def get_batch(self, num, max_length, min_num_feature=0, stage='TRAIN'):
         stage = stage.upper()
         if stage == 'TRAIN':
             col = self.col_train
@@ -37,13 +37,22 @@ class MLDL:
             raise ValueError('Stage must be either TRAIN or TEST')
         if max_length not in self.cache[stage.upper()].keys():
             arr = [i for i in self.cache[stage.upper()].keys() if i <= max_length]
-            if(len(arr) == 0):
+            if (len(arr) == 0):
                 return pd.DataFrame()
             max_length = max(arr)
-        
+
         hit = self.queue_key == f'{num}_{max_length}_{stage}'
         if hit:
             return pd.DataFrame(self.queue.get())
+
+        maxi = self.cache[stage.upper()][max_length]['maxi']
+
+        if min_num_feature > 11:
+            c = col.find({'len': {'$lt': max_length + 1}, 'token_ids': {'$size': min_num_feature}},
+                         {'row_id': 1, '_id': 0})
+            self.sample_cache = list(map(lambda x: x['row_id'], list(c)))
+        else:
+            self.sample_cache = range(1, maxi)
 
         if self.filler_thread is not None:
             self.kill_event.set()
@@ -54,23 +63,23 @@ class MLDL:
 
         self.queue_key = f'{num}_{max_length}_{stage}'
 
-        maxi = self.cache[stage.upper()][max_length]['maxi']
-        self.filler_thread = Thread(target=self.filler, args=(self.queue, num, max_length, maxi, col, self.kill_event))
+        self.filler_thread = Thread(target=self.filler, args=(self.queue, num, self.sample_cache, col, self.kill_event))
         self.filler_thread.start()
 
-        index_list = random.sample(range(1, maxi), num)
-        cursor = col.find({'len': {'$lt': max_length + 1}, 'row_id': {'$in': index_list}}).limit(num)
+        index_list = random.sample(self.sample_cache, min(num, len(self.sample_cache)))
+        cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 1, 'sequence': 1, 'token_ids': 1})
         return pd.DataFrame(list(cursor))
 
     @staticmethod
-    def filler(queue, num, max_length, maxi, col, event):
+    def filler(queue, num, sample_cache, col, event):
         while True:
-            index_list = random.sample(range(1, maxi), num)
-            cursor = col.find({'len': {'$lt': max_length + 1}, 'row_id': {'$in': index_list}}).limit(num)
+            index_list = random.sample(sample_cache, min(num, len(sample_cache)))
+            cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 1, 'sequence': 1, 'token_ids': 1})
             df = pd.DataFrame(list(cursor))
             queue.put(df)
             if event.is_set():
                 break
+
     def terminate(self):
         self.kill_event.set()
         self.queue.get()
