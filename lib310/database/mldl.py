@@ -95,7 +95,6 @@ class MLDL:
                 break
 
     def background_sample_cache(self, max_length, num, min_num_feature, col):
-        print('background_sample_cache')
         i = 1
         while i > 0:
             print(i)
@@ -107,8 +106,6 @@ class MLDL:
             if len(tmp) < 10 * num or self.kill_event_cache.is_set():
                 i = 0
                 break
-        print('background_sample_cache done')
-        # self.sample_cache =
 
     def terminate(self):
         self.kill_event.set()
