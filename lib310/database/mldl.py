@@ -134,10 +134,10 @@ class MLDL:
             main_thread = executor.submit(self.fetch_sample_main, index_list, collections[MAIN])
             interaction_thread = executor.submit(self.fetch_sample_interaction, index_list, collections[INTERACTION])
 
-        main_df = main_thread.result()
-        interaction_df = interaction_thread.result()
+            main_df = main_thread.result()
+            interaction_df = interaction_thread.result()
 
-        return pd.merge(main_df, interaction_df, on='row_id', how='left')
+            return pd.merge(main_df, interaction_df, on='row_id', how='left')
 
     def fetch_sample_main(self, index_list, col):
         """
@@ -146,7 +146,7 @@ class MLDL:
         :param col: main collection
         :return: dataframe of main data
         """
-        cursor = col.find({'row_id': {'$in': index_list}}, {'row_id': 1, 'sequence': 1, 'token_ids': 1})
+        cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 0, 'row_id': 1, 'sequence': 1, 'token_ids': 1})
         return pd.DataFrame(list(cursor))
 
     def fetch_sample_interaction(self, index_list, col):
@@ -156,7 +156,7 @@ class MLDL:
         :param col: interaction collection
         :return: dataframe of interaction data
         """
-        cursor = col.find({'row_id': {'$in': index_list}}, {'row_id': 1, 'interactions': 1})
+        cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 0, 'row_id': 1, 'interactions': 1})
         return pd.DataFrame(list(cursor))
 
     def background_sample_cache(self, max_length, num, min_num_feature, col):
