@@ -5,6 +5,7 @@ import pandas as pd
 from threading import Thread, Event
 from queue import Queue
 import concurrent.futures
+from bounded_pool_executor import BoundedThreadPoolExecutor
 
 TRAIN = 'TRAIN'
 TEST = 'TEST'
@@ -13,7 +14,7 @@ INTERACTION = 'INTERACTION'
 
 
 class MLDL:
-    def __init__(self, mongo_url, cache_size=10):
+    def __init__(self, mongo_url, cache_size=10, sample_max_worker=16):
         random.seed(time.time())
         self.client = MongoClient(mongo_url)
         self.db = self.client['A310']
@@ -37,6 +38,8 @@ class MLDL:
         self.kill_event = Event()
         self.kill_event_cache = Event()
         self.filler_thread_cache = None
+        self.sample_queue = Queue()
+        self.sample_max_worker = sample_max_worker
 
         # Cache the data with regard to length of sequence
         tmp = self.db['length_freq_lang5_train'].find().sort('len', ASCENDING)
@@ -88,7 +91,9 @@ class MLDL:
         if min_num_feature > 11:
             c = col[MAIN].find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
                                {'row_id': 1, '_id': 0}).sort("rand").limit(5 * num)
-            self.sample_cache = list(map(lambda x: x['row_id'], list(c)))
+            tmp = list(c)
+            # print(len(tmp))
+            self.sample_cache = list(map(lambda x: x['row_id'], tmp))
             self.filler_thread_cache = Thread(target=self.background_sample_cache,
                                               args=(max_length, num, min_num_feature, col[MAIN]))
             self.filler_thread_cache.start()
@@ -168,16 +173,80 @@ class MLDL:
         :param col: main collection
         :return: extend the sample cache
         """
+        # print('starting the background sample cache')
+        max_workers = self.sample_max_worker
+        kill_event = Event()
         i = 5
-        while i > 0:
-            c = col.find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
-                         {'row_id': 1, '_id': 0}).sort("rand").skip(i * num).limit(num)
-            tmp = list(c)
-            self.sample_cache += list(map(lambda x: x['row_id'], tmp))
+        listener = concurrent.futures.ThreadPoolExecutor()
+        # print('starting the listener')
+        listener_thread = listener.submit(self.background_sample_cache_listener, kill_event, max_workers)
+
+        # print('starting the executor')
+
+        executor = BoundedThreadPoolExecutor(max_workers=max_workers)
+        while i > 0 and not kill_event.is_set():
+            # print(f'getting the sample cache {i}')
+            executor.submit(self.background_sample_cache_filler, max_length, num, min_num_feature, col, i)
             i += 1
-            if len(tmp) < num or self.kill_event_cache.is_set():
-                i = 0
-                break
+
+        # print('shutting down the executor')
+        listener_thread.result()
+        executor.shutdown(wait=True, cancel_futures=True)
+
+        # while i > 0:
+        #     c = col.find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
+        #                  {'row_id': 1, '_id': 0}).sort("rand").skip(i * num).limit(num)
+        #     tmp = list(c)
+        #     self.sample_cache += list(map(lambda x: x['row_id'], tmp))
+        #     i += 1
+        #     if len(tmp) < num or self.kill_event_cache.is_set():
+        #         i = 0
+        #         break
+
+    def background_sample_cache_filler(self, max_length, num, min_num_feature, col, i):
+        """
+        This function is used to increase the sample cache (suitable row_ids) in the background
+        :param max_length: max length of sequence
+        :param num: number of samples
+        :param min_num_feature: min number of features
+        :param col: main collection
+        :param i: index of the skip
+        :return: extend the sample cache
+        """
+        c = col.find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
+                     {'row_id': 1, '_id': 0}).sort("rand").skip(i * num).limit(num)
+        tmp = list(c)
+        tmp = list(map(lambda x: x['row_id'], tmp))
+        if self.kill_event_cache.is_set():
+            self.sample_queue.put([])
+            return
+
+        self.sample_queue.put(tmp)
+        if len(tmp) < num:
+            self.sample_queue.put([])
+
+    def background_sample_cache_listener(self, kill_event, max_workers):
+        i = 0
+        while True:
+            try:
+                tmp = self.sample_queue.get(timeout=3 * 60)
+                # print(f'get sample cache with len {len(tmp)}')
+                if self.kill_event_cache.is_set():
+                    self.sample_queue = Queue()
+                    kill_event.set()
+                    return
+                if len(tmp) == 0:
+                    # print('sample cache is empty')
+                    kill_event.set()
+                    i += 1
+                if i >= max_workers:
+                    # print('workers are all done')
+                    return
+            except Exception as error:
+                # print('time out on get sample cache')
+                kill_event.set()
+                self.sample_queue = Queue()
+                return
 
     def terminate(self):
         """

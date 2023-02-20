@@ -41,6 +41,6 @@ class TestDB(unittest.TestCase):
     def test_mldl(test):
         from lib310.database import MLDL
         mldl = MLDL(os.getenv('MONGO_URL'))
-        x = mldl.get_batch(100, 300, 'TRAIN')
+        x = mldl.get_batch(100, 300, 20, 'TRAIN')
         mldl.terminate()
         print(len(x))
