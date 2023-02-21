@@ -89,8 +89,11 @@ class MLDL:
         maxi = self.cache[stage.upper()][max_length]['maxi']
 
         if min_num_feature > 11:
+            factor = 10
+            if num < 1000:
+                factor = 10000 // num
             c = col[MAIN].find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
-                               {'row_id': 1, '_id': 0}).sort("rand").limit(5 * num)
+                               {'row_id': 1, '_id': 0}).sort("rand").limit(factor * num)
             tmp = list(c)
             # print(len(tmp))
             self.sample_cache = list(map(lambda x: x['row_id'], tmp))
@@ -176,7 +179,9 @@ class MLDL:
         # print('starting the background sample cache')
         max_workers = self.sample_max_worker
         kill_event = Event()
-        i = 5
+        i = 10
+        if num < 1000:
+            i = 10000 // num
         listener = concurrent.futures.ThreadPoolExecutor()
         # print('starting the listener')
         listener_thread = listener.submit(self.background_sample_cache_listener, kill_event, max_workers)
@@ -239,9 +244,13 @@ class MLDL:
                     # print('sample cache is empty')
                     kill_event.set()
                     i += 1
+
+                self.sample_cache += tmp
+
                 if i >= max_workers:
                     # print('workers are all done')
                     return
+
             except Exception as error:
                 # print('time out on get sample cache')
                 kill_event.set()
