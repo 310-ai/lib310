@@ -61,6 +61,7 @@ class TestBqGcs(unittest.TestCase):
 
     def test_direct_dataset(self):
         ddf = lib310.db.cache_query('SELECT * FROM `pfsdb3.system.info`', 'myjson', 'json', response_type=lib310.db.CacheResponseType.DATASET)
+        print(ddf)
         print(len(ddf))
 
     def test_simple_dataloader(self):

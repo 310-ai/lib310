@@ -5,7 +5,8 @@ import pandas as pd
 from threading import Thread, Event
 from queue import Queue
 import concurrent.futures
-from . import cache_query, FileFormat
+# from . import cache_query, FileFormat
+from .cache_bgquery import cache_query, FileFormat
 import dask.dataframe as dd
 from dotenv import load_dotenv
 
