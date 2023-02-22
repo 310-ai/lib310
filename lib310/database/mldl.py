@@ -5,7 +5,11 @@ import pandas as pd
 from threading import Thread, Event
 from queue import Queue
 import concurrent.futures
-from bounded_pool_executor import BoundedThreadPoolExecutor
+from . import cache_query, FileFormat
+import dask.dataframe as dd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 TRAIN = 'TRAIN'
 TEST = 'TEST'
@@ -36,8 +40,8 @@ class MLDL:
         self.queue = Queue(self.max_queue_size)
         self.filler_thread = None
         self.kill_event = Event()
-        self.kill_event_cache = Event()
-        self.filler_thread_cache = None
+        # self.kill_event_cache = Event()
+        # self.filler_thread_cache = None
         # self.sample_queue = Queue()
         # self.sample_max_worker = sample_max_worker
 
@@ -79,35 +83,50 @@ class MLDL:
             return pd.DataFrame(self.queue.get())
 
         # MISS
-        if self.filler_thread_cache is not None:
-            self.kill_event_cache.set()
-            self.filler_thread_cache.join()
-            self.kill_event_cache.clear()
-            self.filler_thread_cache = None
-            self.sample_cache = []
+        # if self.filler_thread_cache is not None:
+        #     self.kill_event_cache.set()
+        #     self.filler_thread_cache.join()
+        #     self.kill_event_cache.clear()
+        #     self.filler_thread_cache = None
+        #     self.sample_cache = []
 
         maxi = self.cache[stage.upper()][max_length]['maxi']
 
         if min_num_feature > 11:
-            factor = 10
-            if num < 1000:
-                factor = 10000 // num
-            start = time.perf_counter()
-            c = col[MAIN].find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
-                               {'row_id': 1, '_id': 0, 'rand': 1}, batch_size=1000).sort("rand", -1).limit(factor * num)
-            print(f'Query time: {time.perf_counter() - start}')
-            start = time.perf_counter()
-            tmp = list(c)
-            print(f'Convert time: {time.perf_counter() - start}')
-            print(tmp[0], tmp[-1])
-            # print(len(tmp))
-            start = time.perf_counter()
-            self.sample_cache = list(map(lambda x: x['row_id'], tmp))
-            print(f'Convert time 2: {time.perf_counter() - start}')
+            table = '1_uniprot.mongo_lang5_train'
+            if stage == TEST:
+                table = '1_uniprot.mongo_lang5_test'
 
-            self.filler_thread_cache = Thread(target=self.background_sample_cache,
-                                              args=(max_length, num, min_num_feature, col[MAIN], tmp[-1]['rand']))
-            self.filler_thread_cache.start()
+            res = cache_query(
+                query=f"SELECT row_id FROM `{table}` WHERE len <= {max_length} and token_size >= {min_num_feature}",
+                name=f'{max_length}_{min_num_feature}_{stage}',
+                destination_format=FileFormat.CSV,
+            )
+            # print(res)
+            ddf = dd.read_csv(res['uri'])
+            df = ddf.compute()
+            self.sample_cache = df['row_id'].tolist()
+            # print(len(self.sample_cache))
+
+            # factor = 10
+            # if num < 1000:
+            #     factor = 10000 // num
+            # start = time.perf_counter()
+            # c = col[MAIN].find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}},
+            #                    {'row_id': 1, '_id': 0, 'rand': 1}, batch_size=1000).sort("rand", -1).limit(factor * num)
+            # print(f'Query time: {time.perf_counter() - start}')
+            # start = time.perf_counter()
+            # tmp = list(c)
+            # print(f'Convert time: {time.perf_counter() - start}')
+            # print(tmp[0], tmp[-1])
+            # # print(len(tmp))
+            # start = time.perf_counter()
+            # self.sample_cache = list(map(lambda x: x['row_id'], tmp))
+            # print(f'Convert time 2: {time.perf_counter() - start}')
+
+            # self.filler_thread_cache = Thread(target=self.background_sample_cache,
+            #                                   args=(max_length, num, min_num_feature, col[MAIN], tmp[-1]['rand']))
+            # self.filler_thread_cache.start()
         else:
             self.sample_cache = range(1, maxi)
 
@@ -175,29 +194,28 @@ class MLDL:
         cursor = col.find({'row_id': {'$in': index_list}}, {'_id': 0, 'row_id': 1, 'interactions': 1})
         return pd.DataFrame(list(cursor))
 
-    def background_sample_cache(self, max_length, num, min_num_feature, col, last_rand):
-        """
-        This function is used to increase the sample cache (suitable row_ids) in the background
-        :param max_length: max length of sequence
-        :param num: number of samples
-        :param min_num_feature: min number of features
-        :param col: main collection
-        :param last_rand: last rand value
-        :return: extend the sample cache
-        """
-        max_rand = last_rand
-        num = max(num, 1000)
-        while True:
-            print('filling the cache')
-            c = col.find(
-                {'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}, 'rand': {'$lt': max_rand}},
-                {'row_id': 1, '_id': 0, 'rand': 1}, batch_size=1000).sort("rand", -1).limit(num)
-            tmp = list(c)
-            max_rand = tmp[-1]['rand']
-            self.sample_cache += list(map(lambda x: x['row_id'], tmp))
-            if len(tmp) < num or self.kill_event_cache.is_set():
-                break
-
+    # def background_sample_cache(self, max_length, num, min_num_feature, col, last_rand):
+    #     """
+    #     This function is used to increase the sample cache (suitable row_ids) in the background
+    #     :param max_length: max length of sequence
+    #     :param num: number of samples
+    #     :param min_num_feature: min number of features
+    #     :param col: main collection
+    #     :param last_rand: last rand value
+    #     :return: extend the sample cache
+    #     """
+    #     max_rand = last_rand
+    #     num = max(num, 1000)
+    #     while True:
+    #         print('filling the cache')
+    #         c = col.find({'len': {'$lt': max_length + 1}, 'token_size': {'$gt': min_num_feature - 1}, 'rand': {'$lt': max_rand}},
+    #                     {'row_id': 1, '_id': 0, 'rand': 1}, batch_size=1000).sort("rand", -1).limit(num)
+    #         tmp = list(c)
+    #         max_rand = tmp[-1]['rand']
+    #         self.sample_cache += list(map(lambda x: x['row_id'], tmp))
+    #         if len(tmp) < num or self.kill_event_cache.is_set():
+    #             break
+    #
     #     # print('starting the background sample cache')
     #     max_workers = self.sample_max_worker
     #     kill_event = Event()
@@ -294,9 +312,9 @@ class MLDL:
             self.queue = Queue(self.max_queue_size)
 
         # Terminate the filler thread cache
-        if self.filler_thread_cache is not None:
-            self.kill_event_cache.set()
-            self.filler_thread_cache.join()
-            self.kill_event_cache.clear()
-            self.filler_thread_cache = None
-            self.sample_cache = []
+        # if self.filler_thread_cache is not None:
+        #     self.kill_event_cache.set()
+        #     self.filler_thread_cache.join()
+        #     self.kill_event_cache.clear()
+        #     self.filler_thread_cache = None
+        #     self.sample_cache = []
