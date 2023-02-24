@@ -40,6 +40,7 @@ class MLDL:
         self.queue = Queue(self.max_queue_size)
         self.filler_thread = None
         self.kill_event = Event()
+        self.retry = 0
 
         # Cache the data with regard to length of sequence
         tmp = self.db['length_freq_lang5_train'].find().sort('len', ASCENDING)
@@ -131,18 +132,33 @@ class MLDL:
         :param collections: collections of the data
         :return: dataframe of the data
         """
-        index_list = random.sample(self.sample_cache, min(num, len(self.sample_cache)))
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            main_thread = executor.submit(self.fetch_sample_main, index_list, collections[MAIN])
-            interaction_thread = executor.submit(self.fetch_sample_interaction, index_list, collections[INTERACTION])
+        try:
+            index_list = random.sample(self.sample_cache, min(num, len(self.sample_cache)))
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                main_thread = executor.submit(self.fetch_sample_main, index_list, collections[MAIN])
+                interaction_thread = executor.submit(self.fetch_sample_interaction, index_list, collections[INTERACTION])
 
-            main_df = main_thread.result()
-            interaction_df = interaction_thread.result()
+                main_df = main_thread.result()
+                interaction_df = interaction_thread.result()
 
-            if len(interaction_df) == 0:
-                main_df['interactions'] = np.nan
-                return main_df
-            return pd.merge(main_df, interaction_df, on='row_id', how='left')
+                if len(interaction_df) == 0:
+                    main_df['interactions'] = np.nan
+                    self.retry = 0
+                    return main_df
+                df = pd.merge(main_df, interaction_df, on='row_id', how='left')
+                self.retry = 0
+                return df
+        except Exception as e:
+            print(e)
+            if self.retry == 0:
+                time.sleep(1)
+            else:
+                time.sleep(self.retry * 10)
+            self.retry += 1
+            print(f'Cannot fetch data from database, retry number {self.retry} times')
+            if self.retry > 7:
+                raise Exception('Cannot fetch data from database')
+            return self.fetch_sample(num, collections)
 
     def fetch_sample_main(self, index_list, col):
         """
