@@ -9,6 +9,7 @@ import concurrent.futures
 from .cache_bgquery import cache_query, FileFormat
 from ._connection import DatabaseConnection
 import dask.dataframe as dd
+from bounded_pool_executor import BoundedThreadPoolExecutor
 
 
 TRAIN = 'TRAIN'
@@ -18,7 +19,7 @@ INTERACTION = 'INTERACTION'
 
 
 class MLDL:
-    def __init__(self, mongo_url, cache_size=10):
+    def __init__(self, mongo_url, cache_size=30, num_threads=10):
         random.seed(time.time())
         self.client = MongoClient(mongo_url)
         self.db = self.client['A310']
@@ -36,11 +37,14 @@ class MLDL:
         self.cache = {TRAIN: {}, TEST: {}}
         self.sample_cache = []
         self.max_queue_size = cache_size
+        self.num_threads = num_threads
         self.queue_key = None
+        self.pool_key = None
         self.queue = Queue(self.max_queue_size)
         self.filler_thread = None
         self.kill_event = Event()
         self.retry = 0
+
 
         # Cache the data with regard to length of sequence
         tmp = self.db['length_freq_lang5_train'].find().sort('len', ASCENDING)
@@ -79,22 +83,23 @@ class MLDL:
             # HIT
             return pd.DataFrame(self.queue.get())
 
+        # MISS
         maxi = self.cache[stage.upper()][max_length]['maxi']
-
         if min_num_feature > 11:
             table = '1_uniprot.mongo_lang5_train'
             if stage == TEST:
                 table = '1_uniprot.mongo_lang5_test'
-
-            res = cache_query(
-                query=f"SELECT row_id FROM `{table}` WHERE len <= {max_length} and token_size >= {min_num_feature}",
-                name=f'{max_length}_{min_num_feature}_{stage}',
-                destination_format=FileFormat.CSV,
-                db_connection=DatabaseConnection(),
-            )
-            ddf = dd.read_csv(res['uri'])
-            df = ddf.compute()
-            self.sample_cache = df['row_id'].tolist()
+            if len(self.sample_cache) == 0 or not self.pool_key or self.pool_key != f'{max_length}_{min_num_feature}_{stage}':
+                self.pool_key = f'{max_length}_{min_num_feature}_{stage}'
+                res = cache_query(
+                    query=f"SELECT row_id FROM `{table}` WHERE len <= {max_length} and token_size >= {min_num_feature}",
+                    name=f'{max_length}_{min_num_feature}_{stage}',
+                    destination_format=FileFormat.CSV,
+                    db_connection=DatabaseConnection(),
+                )
+                ddf = dd.read_csv(res['uri'])
+                df = ddf.compute()
+                self.sample_cache = df['row_id'].tolist()
         else:
             self.sample_cache = range(1, maxi)
 
@@ -118,12 +123,21 @@ class MLDL:
         :param num: number of samples
         :param col: collections of the data
         """
-        while True:
-            df = self.fetch_sample(num, col)
-            self.queue.put(df)
-            if self.kill_event.is_set():
-                break
+        with BoundedThreadPoolExecutor(max_workers=self.num_threads) as executor:
+            while not self.kill_event.is_set():
+                # print(f'filler thread started {self.kill_event.is_set()}')
+                executor.submit(self.filler_worker, num, col)
+            # print(f'filler thread ended {self.kill_event.is_set()}')
+            while not self.queue.empty():
+                self.queue.get()
+            # print('queue emptied')
+            executor.shutdown(wait=True)
+            # print('executor shutdown')
 
+    def filler_worker(self, num, col):
+        df = self.fetch_sample(num, col)
+        self.queue.put(df)
+        return
     def fetch_sample(self, num, collections):
         """
         This function is used to fetch the data from the database
