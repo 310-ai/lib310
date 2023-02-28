@@ -19,7 +19,7 @@ INTERACTION = 'INTERACTION'
 
 
 class MLDL:
-    def __init__(self, mongo_url, cache_size=30, num_threads=10):
+    def __init__(self, mongo_url, cache_size=50, num_threads=10):
         random.seed(time.time())
         self.client = MongoClient(mongo_url)
         self.db = self.client['A310']
@@ -114,7 +114,7 @@ class MLDL:
 
         self.filler_thread = Thread(target=self.filler, args=(num, col))
         self.filler_thread.start()
-
+        time.sleep(3)
         return self.fetch_sample(num, col)
 
     def filler(self, num, col):
