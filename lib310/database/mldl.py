@@ -19,8 +19,8 @@ INTERACTION = 'INTERACTION'
 
 
 class MLDL:
-    def __init__(self, mongo_url, cache_size=50, num_threads=10):
-        random.seed(time.time())
+    def __init__(self, mongo_url, cache_size=50, num_threads=10, seed=None):
+        random.seed(time.time() if seed is None else seed)
         self.client = MongoClient(mongo_url)
         self.db = self.client['A310']
         self.collections = {
