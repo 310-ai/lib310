@@ -20,7 +20,10 @@ class MLDL:
     __INTERACTION = 'INTERACTION'
     __DB_NAME = 'A310'
     __TOKEN_NAMES = 'token_names'
-    __PARTS = {__INTERACTION: 1, __TOKEN_NAMES: 1}
+    __PROTEIN_NAMES = 'protein_names'
+    __TAXONOMIES = 'taxonomies'
+    __ORGANISMS = 'organisms'
+    __PARTS = {__INTERACTION: 1, __TOKEN_NAMES: 1, __PROTEIN_NAMES: 1, __TAXONOMIES: 1, __ORGANISMS: 0}
 
     def __init__(self, mongo_url: str, cache_size: int = 50, num_threads: int = 10, random_seed: int = time.time()):
         random.seed(random_seed)
@@ -200,8 +203,23 @@ class MLDL:
         token_names = 0
         if parts[MLDL.__TOKEN_NAMES] and parts[MLDL.__TOKEN_NAMES] == 1:
             token_names = 1
+        token_names = 0
+        if not parts[MLDL.__TOKEN_NAMES] or parts[MLDL.__TOKEN_NAMES] == 1:
+            token_names = 1
+        protein_names = 0
+        if not parts[MLDL.__PROTEIN_NAMES] or parts[MLDL.__PROTEIN_NAMES] == 1:
+            protein_names = 1
+        taxonomies = 0
+        if not parts[MLDL.__TAXONOMIES] or parts[MLDL.__TAXONOMIES] == 1:
+            taxonomies = 1
+        organisms = 0
+        if not parts[MLDL.__ORGANISMS] or parts[MLDL.__ORGANISMS] == 1:
+            organisms = 1
         cursor = col.find({'row_id': {'$in': index_list}, 'stage': stage}, {'_id': 0, 'row_id': 1, 'sequence': 1,
-                                                                            'token_ids': 1, 'token_names': token_names})
+                                                                            'token_ids': 1, 'token_names': token_names,
+                                                                            'protein_names': protein_names,
+                                                                            'taxonomies': taxonomies,
+                                                                            'organisms': organisms})
         return pd.DataFrame(list(cursor))
 
     def fetch_sample_interaction(self, index_list: list, col):
