@@ -5,7 +5,7 @@ import hashlib
 from datetime import datetime, timedelta
 import logging as log
 
-__db_gcs_cache = 'system.gcs_cache'
+__db_gcs_cache = 'system.cached_queries'
 
 
 def cache_query(query,
@@ -42,7 +42,7 @@ def cache_query(query,
     # check for the hit
     row = None
     if not ignore_hit:
-        cached = db.client.query('SELECT * from `system.gcs_cache` WHERE status_code != -1').to_dataframe()
+        cached = db.client.query('SELECT * from `system.cached_queries` WHERE status_code != -1').to_dataframe()
         if len(cached) > 0:
             cached = cached.where(cached['hash'] == hashed_query).dropna().sort_values(by=['created_at'],
                                                                                        ascending=False)

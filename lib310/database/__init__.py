@@ -10,7 +10,7 @@ from .cache_bgquery import cache_query as cq
 
 db_connection: DatabaseConnection = None
 __db_info = 'system.info'
-__db_gcs_cache = 'system.gcs_cache'
+__db_gcs_cache = 'system.cached_queries'
 
 __all__ = ['fetch', 'get_table_info', 'list_datasets', 'list_tables', 'summary', 'visualize', 'CacheResponseType', 'MLDL']
 def fetch(*args, **kwargs):
